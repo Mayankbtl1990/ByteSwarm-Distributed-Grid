@@ -72,3 +72,36 @@ code, .mono {
   font-size: 12px;
   font-family: 'JetBrains Mono', monospace;
 }
+.status-bar {
+  display: flex;
+  gap: 30px;
+  padding: 10px 40px;
+  background: #111;
+  border-bottom: 1px solid #222;
+  font-size: 13px;
+  color: #aaa;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dot-green {
+  background: #0f0;
+  box-shadow: 0 0 10px #0f0;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
