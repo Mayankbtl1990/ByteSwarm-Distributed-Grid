@@ -1,5 +1,6 @@
 import React from 'react';
 import StatusBar from './components/StatusBar';
+import WorkerNode from './components/WorkerNode';
 import './App.css';
 
 export default function App() {
@@ -16,8 +17,13 @@ export default function App() {
       <StatusBar />
 
       <main className="app-main">
-        <h2 style={{ color: '#0f0' }}>Day 2 — Status Bar Added</h2>
-        <p style={{ color: '#888', marginTop: 10 }}>WorkerNode component arriving Day 3.</p>
+        <section>
+          <h2 style={{ color: '#0f0', marginBottom: 15 }}>Your Worker Node</h2>
+          <p style={{ color: '#888', marginBottom: 20 }}>
+            This browser tab is contributing spare CPU power to the swarm.
+          </p>
+          <WorkerNode />
+        </section>
       </main>
 
       <footer className="app-footer">Team ByteSwarm • Bhanu • Balaji • Mayank • Mansi</footer>
