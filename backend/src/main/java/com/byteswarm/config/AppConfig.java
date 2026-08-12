@@ -12,14 +12,29 @@ public class AppConfig {
 
     public static synchronized void load() {
         if (loaded) return;
-        try (InputStream in = AppConfig.class.getClassLoader().getResourceAsStream("application.properties")) {
+        try (InputStream in = AppConfig.class.getClassLoader()
+                .getResourceAsStream("application.properties")) {
             if (in != null) {
                 props.load(in);
                 loaded = true;
-                System.out.println("Loaded application.properties");
+                System.out.println("✅ Loaded application.properties");
             }
         } catch (IOException e) {
             throw new RuntimeException("Failed to load config", e);
         }
+    }
+
+    public static String get(String key) {
+        if (!loaded) load();
+        return props.getProperty(key);
+    }
+
+    public static int getInt(String key) {
+        return Integer.parseInt(get(key));
+    }
+
+    public static int getInt(String key, int defaultValue) {
+        String v = get(key);
+        return v == null ? defaultValue : Integer.parseInt(v);
     }
 }
