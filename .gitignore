@@ -8,3 +8,4 @@ dist/
 *.iml
 *.log
 Thumbs.db
+/.metadata/
