@@ -1,3 +1,4 @@
+package com.byteswarm.server;
 import com.byteswarm.registry.ClientRegistry;
 import com.byteswarm.util.JsonUtil;
 import com.byteswarm.model.SwarmMessage;
