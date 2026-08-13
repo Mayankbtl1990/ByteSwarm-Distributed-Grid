@@ -4,14 +4,14 @@ import { WS_URL, CONNECTION_STATUS, MESSAGE_TYPES } from '../utils/constants';
 export function useSwarmSocket(onMessage) {
   const [status, setStatus] = useState(CONNECTION_STATUS.DISCONNECTED);
   const [workerId, setWorkerId] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [stats, setStats] = useState({
+    messagesReceived: 0,
+    messagesSent: 0,
+    connectedAt: null
+  });
   const socketRef = useRef(null);
   const reconnectRef = useRef(null);
-  
-  // Latest onMessage callback ko ref me store karein
-  const onMessageRef = useRef(onMessage);
-  useEffect(() => {
-    onMessageRef.current = onMessage;
-  }, [onMessage]);
 
   const connect = useCallback(() => {
     setStatus(CONNECTION_STATUS.CONNECTING);
@@ -21,23 +21,34 @@ export function useSwarmSocket(onMessage) {
     ws.onopen = () => {
       console.log('[Swarm] Connected');
       setStatus(CONNECTION_STATUS.CONNECTED);
-      ws.send(JSON.stringify({
+      setStats(s => ({ ...s, connectedAt: Date.now() }));
+
+      const registerMsg = {
         type: 'REGISTER',
-        capabilities: {
+        data: {
           cores: navigator.hardwareConcurrency || 4,
-          userAgent: navigator.userAgent
+          userAgent: navigator.userAgent,
+          platform: navigator.platform
         }
-      }));
+      };
+      ws.send(JSON.stringify(registerMsg));
+      setStats(s => ({ ...s, messagesSent: s.messagesSent + 1 }));
     };
 
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
-        console.log('[Swarm]', msg);
+        console.log('[Swarm] ', msg);
+
+        setMessages(prev => [...prev.slice(-49), { ...msg, receivedAt: Date.now() }]);
+        setStats(s => ({ ...s, messagesReceived: s.messagesReceived + 1 }));
+
         if (msg.type === MESSAGE_TYPES.REGISTERED) {
-          setWorkerId(msg.workerId);
+          const wid = msg.data?.workerId || msg.workerId;
+          setWorkerId(wid);
         }
-        if (onMessageRef.current) onMessageRef.current(msg);
+
+        if (onMessage) onMessage(msg);
       } catch (err) {
         console.error('[Swarm] Parse error:', err);
       }
@@ -51,7 +62,7 @@ export function useSwarmSocket(onMessage) {
     };
 
     ws.onerror = () => setStatus(CONNECTION_STATUS.ERROR);
-  }, []); // Ab dependency me onMessage ki zarurat nahi hai
+  }, [onMessage]);
 
   useEffect(() => {
     connect();
@@ -64,8 +75,9 @@ export function useSwarmSocket(onMessage) {
   const send = useCallback((data) => {
     if (socketRef.current?.readyState === WebSocket.OPEN) {
       socketRef.current.send(JSON.stringify(data));
+      setStats(s => ({ ...s, messagesSent: s.messagesSent + 1 }));
     }
   }, []);
 
-  return { status, workerId, send };
+  return { status, workerId, send, messages, stats };
 }
