@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import StatusBar from './components/StatusBar';
 import WorkerNode from './components/WorkerNode';
+import MessageLog from './components/MessageLog';
+import { useSwarmSocket } from './hooks/useSwarmSocket';
 import './App.css';
 
 export default function App() {
+  const [chunks, setChunks] = useState([]);
+  const handleMessage = useCallback((msg) => {
+    if (msg.type === 'COMPUTE_CHUNK') setChunks(c => [...c, msg]);
+  }, []);
+  const { messages } = useSwarmSocket(handleMessage);
+
   return (
     <div className="app">
       <header className="app-header">
@@ -19,10 +27,8 @@ export default function App() {
       <main className="app-main">
         <section>
           <h2 style={{ color: '#0f0', marginBottom: 15 }}>Your Worker Node</h2>
-          <p style={{ color: '#888', marginBottom: 20 }}>
-            This browser tab is contributing spare CPU power to the swarm.
-          </p>
           <WorkerNode />
+          <MessageLog messages={messages} />
         </section>
       </main>
 
