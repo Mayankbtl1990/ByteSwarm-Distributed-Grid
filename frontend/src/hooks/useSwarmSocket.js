@@ -12,6 +12,26 @@ export function useSwarmSocket(onMessage) {
   });
   const socketRef = useRef(null);
   const reconnectRef = useRef(null);
+  const heartbeatRef = useRef(null);
+
+  const startHeartbeat = () => {
+    heartbeatRef.current = setInterval(() => {
+      if (socketRef.current?.readyState === WebSocket.OPEN) {
+        socketRef.current.send(JSON.stringify({
+          type: 'HEARTBEAT',
+          data: { ts: Date.now() }
+        }));
+        setStats(s => ({ ...s, messagesSent: s.messagesSent + 1 }));
+      }
+    }, 10000);
+  };
+
+  const stopHeartbeat = () => {
+    if (heartbeatRef.current) {
+      clearInterval(heartbeatRef.current);
+      heartbeatRef.current = null;
+    }
+  };
 
   const connect = useCallback(() => {
     setStatus(CONNECTION_STATUS.CONNECTING);
@@ -23,23 +43,22 @@ export function useSwarmSocket(onMessage) {
       setStatus(CONNECTION_STATUS.CONNECTED);
       setStats(s => ({ ...s, connectedAt: Date.now() }));
 
-      const registerMsg = {
+      ws.send(JSON.stringify({
         type: 'REGISTER',
         data: {
           cores: navigator.hardwareConcurrency || 4,
           userAgent: navigator.userAgent,
           platform: navigator.platform
         }
-      };
-      ws.send(JSON.stringify(registerMsg));
+      }));
       setStats(s => ({ ...s, messagesSent: s.messagesSent + 1 }));
+      startHeartbeat();
     };
 
     ws.onmessage = (event) => {
       try {
         const msg = JSON.parse(event.data);
         console.log('[Swarm] ', msg);
-
         setMessages(prev => [...prev.slice(-49), { ...msg, receivedAt: Date.now() }]);
         setStats(s => ({ ...s, messagesReceived: s.messagesReceived + 1 }));
 
@@ -47,7 +66,6 @@ export function useSwarmSocket(onMessage) {
           const wid = msg.data?.workerId || msg.workerId;
           setWorkerId(wid);
         }
-
         if (onMessage) onMessage(msg);
       } catch (err) {
         console.error('[Swarm] Parse error:', err);
@@ -58,6 +76,7 @@ export function useSwarmSocket(onMessage) {
       console.log('[Swarm] Disconnected. Retrying in 3s...');
       setStatus(CONNECTION_STATUS.DISCONNECTED);
       setWorkerId(null);
+      stopHeartbeat();
       reconnectRef.current = setTimeout(connect, 3000);
     };
 
@@ -67,6 +86,7 @@ export function useSwarmSocket(onMessage) {
   useEffect(() => {
     connect();
     return () => {
+      stopHeartbeat();
       if (reconnectRef.current) clearTimeout(reconnectRef.current);
       if (socketRef.current) socketRef.current.close();
     };
