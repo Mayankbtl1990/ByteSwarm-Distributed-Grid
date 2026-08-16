@@ -267,3 +267,43 @@ code, .mono {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.stat-card {
+  background: linear-gradient(135deg, #0a1a0a 0%, #050505 100%);
+  border: 1px solid #1a3a1a;
+  border-radius: 10px;
+  padding: 18px;
+  text-align: center;
+  transition: all 0.3s;
+}
+
+.stat-card:hover {
+  border-color: #0f0;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 20px rgba(0, 255, 0, 0.2);
+}
+
+.stat-icon {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.stat-label {
+  color: #888;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.stat-value {
+  color: #0f0;
+  font-size: 26px;
+  font-weight: 800;
+}
