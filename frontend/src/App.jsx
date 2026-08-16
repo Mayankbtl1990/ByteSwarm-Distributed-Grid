@@ -2,6 +2,7 @@ import React, { useState, useCallback } from 'react';
 import StatusBar from './components/StatusBar';
 import WorkerNode from './components/WorkerNode';
 import MessageLog from './components/MessageLog';
+import StatsPanel from './components/StatsPanel';
 import { useSwarmSocket } from './hooks/useSwarmSocket';
 import './App.css';
 
@@ -10,12 +11,12 @@ export default function App() {
   const handleMessage = useCallback((msg) => {
     if (msg.type === 'COMPUTE_CHUNK') setChunks(c => [...c, msg]);
   }, []);
-  const { messages } = useSwarmSocket(handleMessage);
+  const { messages, stats, status } = useSwarmSocket(handleMessage);
 
   return (
     <div className="app">
       <header className="app-header">
-        <div className="logo"> </div>
+        <div className="logo"></div>
         <div>
           <h1 className="app-title">BYTESWARM</h1>
           <p className="app-subtitle">Browser-Based Distributed Compute Grid</p>
@@ -25,6 +26,7 @@ export default function App() {
       <StatusBar />
 
       <main className="app-main">
+        <StatsPanel stats={stats} status={status} />
         <section>
           <h2 style={{ color: '#0f0', marginBottom: 15 }}>Your Worker Node</h2>
           <WorkerNode />

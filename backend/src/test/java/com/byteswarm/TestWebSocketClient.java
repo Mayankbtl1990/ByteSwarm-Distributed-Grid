@@ -19,7 +19,7 @@ public class TestWebSocketClient {
 
     public static void main(String[] args) throws Exception {
         int numClients = args.length > 0 ? Integer.parseInt(args[0]) : 5;
-        System.out.println("🧪 Starting " + numClients + " test worker clients...");
+        System.out.println(" Starting " + numClients + " test worker clients...");
 
         for (int i = 0; i < numClients; i++) {
             final int id = i;
@@ -58,11 +58,11 @@ public class TestWebSocketClient {
                             protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
                                 if (msg instanceof FullHttpResponse resp) {
                                     handshaker.finishHandshake(ctx.channel(), resp);
-                                    System.out.println("[Client " + id + "] ✅ Connected");
+                                    System.out.println("[Client " + id + "]  Connected");
                                     ctx.channel().writeAndFlush(new TextWebSocketFrame(
                                             "{\"type\":\"REGISTER\",\"data\":{\"cores\":4}}"));
                                 } else if (msg instanceof TextWebSocketFrame frame) {
-                                    System.out.println("[Client " + id + "] 📨 " + frame.text());
+                                    System.out.println("[Client " + id + "]  " + frame.text());
                                 }
                             }
                         });
