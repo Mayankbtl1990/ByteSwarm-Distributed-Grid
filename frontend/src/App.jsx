@@ -7,9 +7,13 @@ import { useSwarmSocket } from './hooks/useSwarmSocket';
 import './App.css';
 
 export default function App() {
-  const [chunks, setChunks] = useState([]);
+  const [activeJob, setActiveJob] = useState(null);
+  const [chunkStats, setChunkStats] = useState({ completed: 0 });
+
   const handleMessage = useCallback((msg) => {
-    if (msg.type === 'COMPUTE_CHUNK') setChunks(c => [...c, msg]);
+    if (msg.type === 'COMPUTE_CHUNK') {
+      setActiveJob({ jobId: msg.data?.jobId, jobType: 'compute' });
+    }
   }, []);
   const { messages, stats, status } = useSwarmSocket(handleMessage);
 
@@ -30,6 +34,7 @@ export default function App() {
         <section>
           <h2 style={{ color: '#0f0', marginBottom: 15 }}>Your Worker Node</h2>
           <WorkerNode />
+          <JobsSection activeJob={activeJob} chunkStats={chunkStats} />
           <MessageLog messages={messages} />
         </section>
       </main>
