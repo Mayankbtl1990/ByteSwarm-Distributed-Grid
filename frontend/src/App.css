@@ -307,3 +307,63 @@ code, .mono {
   font-size: 26px;
   font-weight: 800;
 }
+.jobs-section {
+  margin-top: 25px;
+  background: linear-gradient(135deg, #1a1a0a 0%, #0a0a0a 100%);
+  border: 1px solid #3a3a1a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.jobs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: rgba(255, 200, 0, 0.05);
+  border-bottom: 1px solid #3a3a1a;
+  color: #fc0;
+  font-weight: 700;
+}
+
+.job-id {
+  color: #888;
+  font-size: 12px;
+}
+
+.jobs-body {
+  padding: 20px;
+}
+
+.no-job {
+  text-align: center;
+  padding: 30px 20px;
+  color: #666;
+}
+
+.no-job-icon {
+  font-size: 40px;
+  margin-bottom: 10px;
+  opacity: 0.4;
+}
+
+.no-job-hint {
+  color: #444;
+  font-size: 11px;
+  margin-top: 8px;
+  font-style: italic;
+}
+
+.job-active {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.job-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 0;
+  border-bottom: 1px dashed #333;
+  color: #ccc;
+}
