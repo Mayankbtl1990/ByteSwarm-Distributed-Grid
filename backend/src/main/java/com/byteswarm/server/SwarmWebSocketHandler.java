@@ -1,4 +1,6 @@
 package com.byteswarm.server;
+
+import com.byteswarm.chunking.JobManager;
 import com.byteswarm.registry.ClientRegistry;
 import com.byteswarm.util.JsonUtil;
 import com.byteswarm.model.SwarmMessage;
@@ -29,30 +31,34 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
     public void channelInactive(ChannelHandlerContext ctx) {
         String workerId = ctx.channel().id().asShortText();
         ClientRegistry.getInstance().unregister(workerId);
-        log.info(" Worker DISCONNECTED: {} | Remaining: {}",
-                workerId, ClientRegistry.getInstance().size());
+        log.info(" Worker DISCONNECTED: {}", workerId);
     }
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame frame) {
         String workerId = ctx.channel().id().asShortText();
-        String raw = frame.text();
-        log.info(" From {}: {}", workerId, raw);
-
         try {
-            SwarmMessage msg = JsonUtil.fromJson(raw, SwarmMessage.class);
+            SwarmMessage msg = JsonUtil.fromJson(frame.text(), SwarmMessage.class);
             handleMessage(ctx, workerId, msg);
         } catch (Exception e) {
             log.warn(" Bad message from {}: {}", workerId, e.getMessage());
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void handleMessage(ChannelHandlerContext ctx, String workerId, SwarmMessage msg) {
         switch (msg.getType()) {
-            case "REGISTER" -> log.info("REGISTER capabilities from {}: {}", workerId, msg.getData());
+            case "REGISTER" -> log.info(" {} capabilities: {}", workerId, msg.getData());
             case "HEARTBEAT" -> log.debug(" Heartbeat from {}", workerId);
-            case "CHUNK_RESULT" -> log.info(" Chunk result from {} (handled in Week 2)", workerId);
-            default -> log.warn(" Unknown message type: {}", msg.getType());
+            case "CHUNK_RESULT" -> {
+                Map<String, Object> data = (Map<String, Object>) msg.getData();
+                String chunkId = (String) data.get("chunkId");
+                String jobId = (String) data.get("jobId");
+                Object results = data.get("results");
+                log.info(" Received result from {} for chunk {}", workerId, chunkId);
+                JobManager.getInstance().recordResult(jobId, chunkId, results);
+            }
+            default -> log.warn(" Unknown type: {}", msg.getType());
         }
     }
 
