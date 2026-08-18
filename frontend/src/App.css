@@ -307,3 +307,65 @@ code, .mono {
   font-size: 26px;
   font-weight: 800;
 }
+.swarm-panel {
+  margin: 25px 0;
+  background: linear-gradient(135deg, #0a0a1a 0%, #050505 100%);
+  border: 1px solid #1a1a3a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.swarm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 20px;
+  background: rgba(0, 100, 255, 0.05);
+  border-bottom: 1px solid #1a1a3a;
+  color: #0af;
+  font-weight: 700;
+}
+
+.swarm-error {
+  color: #f80;
+  font-size: 12px;
+}
+
+.swarm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 20px;
+}
+
+.swarm-stat {
+  text-align: center;
+  padding: 15px 10px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid #1a1a3a;
+  border-radius: 8px;
+  transition: all 0.3s;
+}
+
+.swarm-stat:hover {
+  border-color: #0af;
+  transform: translateY(-2px);
+}
+
+.swarm-stat-icon {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+
+.swarm-stat-label {
+  color: #666;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+
+.swarm-stat-value {
+  font-size: 22px;
+  font-weight: 800;
+}
