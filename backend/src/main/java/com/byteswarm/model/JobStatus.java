@@ -7,7 +7,7 @@ public class JobStatus {
     private int failedChunks;
     private long startedAt;
     private long completedAt;
-    private String state; // QUEUED, RUNNING, COMPLETED, FAILED
+    private String state; 
 
     public JobStatus() {}
 
