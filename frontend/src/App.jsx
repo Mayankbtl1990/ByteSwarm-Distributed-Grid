@@ -3,7 +3,6 @@ import StatusBar from './components/StatusBar';
 import WorkerNode from './components/WorkerNode';
 import MessageLog from './components/MessageLog';
 import StatsPanel from './components/StatsPanel';
-import JobsSection from './components/JobsSection';
 import { useSwarmSocket } from './hooks/useSwarmSocket';
 import './App.css';
 
