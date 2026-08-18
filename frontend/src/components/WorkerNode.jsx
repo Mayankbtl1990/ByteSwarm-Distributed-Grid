@@ -1,11 +1,12 @@
 import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSwarmSocket } from '../hooks/useSwarmSocket';
+import { useComputeMetrics } from '../hooks/useComputeMetrics';
 
 export default function WorkerNode({ onChunkProcessed }) {
   const workerRef = useRef(null);
-  const [computed, setComputed] = useState(0);
   const [currentChunk, setCurrentChunk] = useState(null);
   const sendRef = useRef(null);
+  const { metrics, recordChunk } = useComputeMetrics();
 
   useEffect(() => {
     workerRef.current = new Worker(
@@ -16,19 +17,15 @@ export default function WorkerNode({ onChunkProcessed }) {
     workerRef.current.onmessage = (e) => {
       const { chunkId, jobId, results, computeTimeMs } = e.data;
       console.log(`[WorkerNode]  Chunk ${chunkId} done in ${computeTimeMs.toFixed(1)}ms`);
+
       if (sendRef.current) {
         sendRef.current({
           type: 'CHUNK_RESULT',
-          data: {
-            chunkId,
-            jobId,
-            results,
-            computeTimeMs
-          }
+          data: { chunkId, jobId, results, computeTimeMs }
         });
       }
 
-      setComputed(c => c + 1);
+      recordChunk(computeTimeMs, results.length);
       setCurrentChunk(null);
       if (onChunkProcessed) onChunkProcessed(chunkId);
     };
@@ -36,7 +33,7 @@ export default function WorkerNode({ onChunkProcessed }) {
     return () => {
       if (workerRef.current) workerRef.current.terminate();
     };
-  }, [onChunkProcessed]);
+  }, [onChunkProcessed, recordChunk]);
 
   const handleMessage = useCallback((msg) => {
     if (msg.type === 'COMPUTE_CHUNK') {
@@ -69,7 +66,12 @@ export default function WorkerNode({ onChunkProcessed }) {
         <Row label="Status" value={status.toUpperCase()} color={statusColor} />
         <Row label="Worker ID" value={workerId || '—'} />
         <Row label="CPU Cores" value={navigator.hardwareConcurrency || 'N/A'} />
-        <Row label="Chunks computed" value={computed} color="#0f0" />
+        <Row label="Chunks computed" value={metrics.chunksCompleted} color="#0f0" />
+        <Row label="Avg compute time"
+             value={metrics.avgComputeMs > 0 ? `${metrics.avgComputeMs.toFixed(1)}ms` : '—'} />
+        <Row label="Est. GFLOPS"
+             value={metrics.estimatedGFlops.toFixed(3)}
+             color="#0af" />
         <Row label="Currently processing"
              value={currentChunk?.chunkId?.slice(-8) || 'idle'}
              color={currentChunk ? '#fc0' : '#666'} />
