@@ -55,8 +55,10 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
                 String chunkId = (String) data.get("chunkId");
                 String jobId = (String) data.get("jobId");
                 Object results = data.get("results");
-                log.info(" Received result from {} for chunk {}", workerId, chunkId);
-                JobManager.getInstance().recordResult(jobId, chunkId, results);
+                Number computeTime = (Number) data.get("computeTimeMs");
+                long ms = computeTime != null ? computeTime.longValue() : 0;
+                log.info(" Result from {} — chunk {} in {}ms", workerId, chunkId, ms);
+                JobManager.getInstance().recordResult(jobId, chunkId, results, ms);
             }
             default -> log.warn(" Unknown type: {}", msg.getType());
         }
