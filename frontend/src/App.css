@@ -72,6 +72,7 @@ code, .mono {
   font-size: 12px;
   font-family: 'JetBrains Mono', monospace;
 }
+
 .status-bar {
   display: flex;
   gap: 30px;
@@ -105,6 +106,7 @@ code, .mono {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.4; }
 }
+
 .worker-card {
   background: linear-gradient(135deg, #0f1a0f 0%, #050505 100%);
   border: 1px solid #0f0;
@@ -144,6 +146,18 @@ code, .mono {
   animation: pulse 1.5s infinite;
 }
 
+/* Naya add kiya gaya Busy Badge UI styling */
+.busy-badge {
+  background: rgba(255, 200, 0, 0.2);
+  color: #fc0;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  animation: pulse 1s infinite;
+  margin-left: 8px;
+}
+
 .worker-body {
   display: flex;
   flex-direction: column;
@@ -175,6 +189,7 @@ code, .mono {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .message-log {
   margin-top: 30px;
   background: #050505;
@@ -208,6 +223,7 @@ code, .mono {
 .log-body::-webkit-scrollbar {
   width: 6px;
 }
+
 .log-body::-webkit-scrollbar-thumb {
   background: #0f0;
   border-radius: 3px;
@@ -267,6 +283,7 @@ code, .mono {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -307,6 +324,7 @@ code, .mono {
   font-size: 26px;
   font-weight: 800;
 }
+
 .swarm-panel {
   margin: 25px 0;
   background: linear-gradient(135deg, #0a0a1a 0%, #050505 100%);
