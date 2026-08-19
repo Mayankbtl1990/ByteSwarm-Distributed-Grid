@@ -5,6 +5,7 @@ import MessageLog from './components/MessageLog';
 import StatsPanel from './components/StatsPanel';
 import JobsSection from './components/JobsSection';
 import SwarmMetricsPanel from './components/SwarmMetricsPanel';
+import WorkerGrid from './components/WorkerGrid';
 import { useSwarmSocket } from './hooks/useSwarmSocket';
 import './App.css';
 
@@ -28,7 +29,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <div className="logo">🐝</div>
+        <div className="logo"> </div>
         <div>
           <h1 className="app-title">BYTESWARM</h1>
           <p className="app-subtitle">Browser-Based Distributed Compute Grid</p>
@@ -39,6 +40,7 @@ export default function App() {
 
       <main className="app-main">
         <SwarmMetricsPanel />
+        <WorkerGrid />
         <StatsPanel stats={stats} status={status} />
         <section>
           <h2 style={{ color: '#0f0', marginBottom: 15 }}>Your Worker Node</h2>
