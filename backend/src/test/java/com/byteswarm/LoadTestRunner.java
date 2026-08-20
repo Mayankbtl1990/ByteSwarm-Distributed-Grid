@@ -10,20 +10,20 @@ public class LoadTestRunner {
 
     public static void main(String[] args) throws InterruptedException {
         int minWorkers = 3;
-        System.out.println("⏳ Waiting for at least " + minWorkers + " workers to connect...");
+        System.out.println(" Waiting for at least " + minWorkers + " workers to connect...");
 
         while (ClientRegistry.getInstance().size() < minWorkers) {
             Thread.sleep(1000);
             System.out.print(".");
         }
-        System.out.println("\n✅ " + ClientRegistry.getInstance().size() + " workers connected");
+        System.out.println("\n " + ClientRegistry.getInstance().size() + " workers connected");
 
-        System.out.println("🎯 Generating 5,000,000 mock equations...");
+        System.out.println(" Generating 5,000,000 mock equations...");
         List<String> dataset = ChunkingEngine.generateMockDataset(5_000_000);
 
         long start = System.currentTimeMillis();
         String jobId = JobManager.getInstance().submitJob(dataset, 1000);
-        System.out.println("📋 Job submitted: " + jobId);
+        System.out.println(" Job submitted: " + jobId);
 
         while (!"COMPLETED".equals(JobManager.getInstance().getStatus(jobId).getState())) {
             Thread.sleep(1000);
