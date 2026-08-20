@@ -1,0 +1,25 @@
+
+
+# Week 1 — Foundation (Recap)
+
+## Goal
+Set up the plumbing: a Netty WebSocket server that browser tabs can connect to as "worker nodes."
+
+## Delivered
+- Maven backend scaffold (Bhanu, Balaji)
+- React + Vite frontend scaffold (Mayank, Mansi)
+- Netty WebSocket server on port 8080 (Bhanu)
+- Thread-safe ClientRegistry (Balaji)
+- Message routing + JSON protocol (Bhanu + Balaji)
+- Custom React hook `useSwarmSocket` with auto-reconnect + heartbeat (Mayank)
+- Beautiful dark-theme dashboard with StatusBar, StatsPanel, MessageLog (Mansi)
+- Multi-client load test client (Bhanu)
+- Documentation (Balaji)
+
+## Key Files Introduced
+- `NettyWebSocketServer.java`
+- `SwarmWebSocketHandler.java`
+- `ClientRegistry.java`
+- `useSwarmSocket.js`
+- `WorkerNode.jsx`
+- `App.css` (dark theme)

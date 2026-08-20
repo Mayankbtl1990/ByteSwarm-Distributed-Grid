@@ -15,7 +15,7 @@ export default function StatusBar() {
         <span>System Online</span>
       </div>
       <div className="status-item">
-        <span className="mono">🕐 {time}</span>
+        <span className="mono"> {time}</span>
       </div>
       <div className="status-item">
         <span className="mono">v1.0.0 — Week 1</span>

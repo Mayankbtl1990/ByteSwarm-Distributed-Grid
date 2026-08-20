@@ -1,0 +1,88 @@
+# Week 2 — Chunking & Web Workers
+
+##  Goal
+Enable the swarm to actually **compute** distributed workloads:
+- Backend chunks datasets and dispatches to workers
+- Frontend Web Workers process chunks off the main thread
+- Results flow back to server for aggregation
+
+---
+
+##  Architecture
+         
+text
+            ┌─────────────────────────┐
+            │  ByteSwarmApplication   │
+            │  (main + demo job)      │
+            └──────────┬──────────────┘
+                       │
+    ┌──────────────────┼──────────────────────┐
+    │                  │                      │
+┌───────▼────────┐ ┌──────▼──────────┐ ┌────────▼────────┐
+│ Netty WS Server│ │ Metrics HTTP │ │ Job Scheduler │
+│ (port 8080) │ │ (port 8081) │ │ (auto every 60s)│
+└───────┬────────┘ └─────────────────┘ └────────┬────────┘
+│ │
+│ ┌────▼─────┐
+│ │JobManager│
+│ └────┬─────┘
+│ │
+│ ┌──────▼──────┐
+│ │ChunkingEngine│
+│ └──────┬──────┘
+│ │
+│ ┌──────▼─────────┐
+└──────────────────────────────────▶ ChunkDispatcher│
+│(least-loaded) │
+└──────┬─────────┘
+│ WebSocket
+▼
+┌─────────────────┐
+│ Browser Worker │
+│ (Web Worker API)│
+└────────┬────────┘
+│ postMessage
+▼
+┌─────────────────┐
+│ compute results │
+│ back to server │
+└─────────────────┘
+
+
+
+---
+
+##  New Components
+
+### Backend
+| File | Purpose |
+|------|---------|
+| `ChunkingEngine.java` | Splits datasets into fixed-size chunks |
+| `JobManager.java` | Tracks jobs, chunks, results, timing |
+| `ChunkDispatcher.java` | Least-loaded worker selection |
+| `MetricsHttpServer.java` | Exposes `/api/metrics` for dashboard |
+| `LoadTestRunner.java` | 5M item benchmark script |
+| `ChunkingEngineTest.java` | Unit tests |
+
+### Frontend
+| File | Purpose |
+|------|---------|
+| `workers/computeWorker.js` | Off-main-thread compute worker |
+| `hooks/useComputeMetrics.js` | Local performance tracking |
+| `hooks/useSwarmMetrics.js` | Global metrics polling |
+| `hooks/useFpsMonitor.js` | UI responsiveness meter |
+| `components/WorkerGrid.jsx` | All-workers visual grid |
+| `components/SwarmMetricsPanel.jsx` | Global dashboard |
+| `components/JobsSection.jsx` | Active job progress |
+| `components/ProgressBar.jsx` | Animated progress bar |
+| `components/FpsMeter.jsx` | Floating FPS indicator |
+
+---
+
+##  Testing
+
+### Run unit tests:
+```bash
+cd backend
+mvn test
+
