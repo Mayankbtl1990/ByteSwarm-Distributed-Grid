@@ -499,3 +499,29 @@ code, .mono {
   margin-bottom: 10px;
   opacity: 0.4;
 }
+.fps-meter {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #0f0;
+  border-radius: 8px;
+  text-align: center;
+  z-index: 1000;
+  backdrop-filter: blur(10px);
+}
+
+.fps-value {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.fps-label {
+  font-size: 9px;
+  color: #888;
+  letter-spacing: 1px;
+  margin-top: 4px;
+  font-family: 'JetBrains Mono', monospace;
+}

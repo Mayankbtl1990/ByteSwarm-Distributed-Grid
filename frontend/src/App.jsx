@@ -6,6 +6,7 @@ import StatsPanel from './components/StatsPanel';
 import JobsSection from './components/JobsSection';
 import SwarmMetricsPanel from './components/SwarmMetricsPanel';
 import WorkerGrid from './components/WorkerGrid';
+import FpsMeter from './components/FpsMeter';
 import { useSwarmSocket } from './hooks/useSwarmSocket';
 import './App.css';
 
@@ -28,6 +29,8 @@ export default function App() {
 
   return (
     <div className="app">
+      <FpsMeter />
+
       <header className="app-header">
         <div className="logo"> </div>
         <div>
