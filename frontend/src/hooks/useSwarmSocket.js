@@ -1,103 +1,84 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { WS_URL, CONNECTION_STATUS, MESSAGE_TYPES } from '../utils/constants';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { WS_URL, MSG_TYPES } from '../utils/constants';
 
-export function useSwarmSocket(onMessage) {
-  const [status, setStatus] = useState(CONNECTION_STATUS.DISCONNECTED);
-  const [workerId, setWorkerId] = useState(null);
+const MAX_RETRIES = 10;
+const BASE_DELAY = 1000;
+
+export function useSwarmSocket() {
+  const [status, setStatus] = useState('disconnected');
   const [messages, setMessages] = useState([]);
-  const [stats, setStats] = useState({
-    messagesReceived: 0,
-    messagesSent: 0,
-    connectedAt: null
-  });
-  const socketRef = useRef(null);
-  const reconnectRef = useRef(null);
-  const heartbeatRef = useRef(null);
+  const [reconnectAttempt, setReconnectAttempt] = useState(0);
 
-  const startHeartbeat = () => {
-    heartbeatRef.current = setInterval(() => {
-      if (socketRef.current?.readyState === WebSocket.OPEN) {
-        socketRef.current.send(JSON.stringify({
-          type: 'HEARTBEAT',
-          data: { ts: Date.now() }
-        }));
-        setStats(s => ({ ...s, messagesSent: s.messagesSent + 1 }));
-      }
-    }, 10000);
-  };
-
-  const stopHeartbeat = () => {
-    if (heartbeatRef.current) {
-      clearInterval(heartbeatRef.current);
-      heartbeatRef.current = null;
-    }
-  };
+  const wsRef = useRef(null);
+  const retryRef = useRef(0);
+  const shouldReconnect = useRef(true);
 
   const connect = useCallback(() => {
-    setStatus(CONNECTION_STATUS.CONNECTING);
+    setStatus(retryRef.current > 0 ? 'reconnecting' : 'connecting');
+
     const ws = new WebSocket(WS_URL);
-    socketRef.current = ws;
+    wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log('[Swarm] Connected');
-      setStatus(CONNECTION_STATUS.CONNECTED);
-      setStats(s => ({ ...s, connectedAt: Date.now() }));
+      console.log('[ws] connected');
+      setStatus('connected');
+      retryRef.current = 0;
+      setReconnectAttempt(0);
 
+      const workerId = `worker-${Math.random().toString(36).slice(2, 8)}`;
       ws.send(JSON.stringify({
-        type: 'REGISTER',
-        data: {
-          cores: navigator.hardwareConcurrency || 4,
-          userAgent: navigator.userAgent,
-          platform: navigator.platform
-        }
+        type: MSG_TYPES.REGISTER,
+        data: { workerId, ua: navigator.userAgent },
+        timestamp: Date.now(),
       }));
-      setStats(s => ({ ...s, messagesSent: s.messagesSent + 1 }));
-      startHeartbeat();
     };
 
-    ws.onmessage = (event) => {
+    ws.onmessage = (evt) => {
       try {
-        const msg = JSON.parse(event.data);
-        console.log('[Swarm] ', msg);
-        setMessages(prev => [...prev.slice(-49), { ...msg, receivedAt: Date.now() }]);
-        setStats(s => ({ ...s, messagesReceived: s.messagesReceived + 1 }));
-
-        if (msg.type === MESSAGE_TYPES.REGISTERED) {
-          const wid = msg.data?.workerId || msg.workerId;
-          setWorkerId(wid);
-        }
-        if (onMessage) onMessage(msg);
-      } catch (err) {
-        console.error('[Swarm] Parse error:', err);
+        const msg = JSON.parse(evt.data);
+        setMessages((m) => [...m.slice(-199), msg]);
+      } catch (e) {
+        console.error('[ws] parse error', e);
       }
     };
 
-    ws.onclose = () => {
-      console.log('[Swarm] Disconnected. Retrying in 3s...');
-      setStatus(CONNECTION_STATUS.DISCONNECTED);
-      setWorkerId(null);
-      stopHeartbeat();
-      reconnectRef.current = setTimeout(connect, 3000);
-    };
+    ws.onerror = (e) => console.error('[ws] error', e);
 
-    ws.onerror = () => setStatus(CONNECTION_STATUS.ERROR);
-  }, [onMessage]);
+    ws.onclose = (evt) => {
+      console.warn('[ws] closed', evt.code, evt.reason);
+      setStatus('disconnected');
+
+      if (!shouldReconnect.current) return;
+
+      if (retryRef.current >= MAX_RETRIES) {
+        console.error('[ws] giving up after', MAX_RETRIES, 'retries');
+        return;
+      }
+
+      const delay = Math.min(BASE_DELAY * 2 ** retryRef.current, 15000);
+      retryRef.current += 1;
+      setReconnectAttempt(retryRef.current);
+
+      console.log(`[ws] reconnecting in ${delay}ms (attempt ${retryRef.current})`);
+      setTimeout(connect, delay);
+    };
+  }, []);
 
   useEffect(() => {
+    shouldReconnect.current = true;
     connect();
+
     return () => {
-      stopHeartbeat();
-      if (reconnectRef.current) clearTimeout(reconnectRef.current);
-      if (socketRef.current) socketRef.current.close();
+      shouldReconnect.current = false;
+      if (wsRef.current) wsRef.current.close();
     };
   }, [connect]);
 
-  const send = useCallback((data) => {
-    if (socketRef.current?.readyState === WebSocket.OPEN) {
-      socketRef.current.send(JSON.stringify(data));
-      setStats(s => ({ ...s, messagesSent: s.messagesSent + 1 }));
+  const send = useCallback((obj) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify(obj));
     }
   }, []);
 
-  return { status, workerId, send, messages, stats };
+  return { status, messages, send, reconnectAttempt };
 }
