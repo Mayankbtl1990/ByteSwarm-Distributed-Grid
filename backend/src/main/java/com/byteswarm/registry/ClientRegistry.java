@@ -29,7 +29,7 @@ public class ClientRegistry {
     public void unregister(String workerId) {
         workers.remove(workerId);
         workerInfo.remove(workerId);
-        log.info("🗑️ Removed {} | Total: {}", workerId, workers.size());
+        log.info(" Removed {} | Total: {}", workerId, workers.size());
     }
 
     public Channel get(String workerId) { return workers.get(workerId); }

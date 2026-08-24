@@ -2,7 +2,7 @@ self.onmessage = (e) => {
   const { chunkId, jobId, payload } = e.data;
   const startTime = performance.now();
 
-  console.log(`[Worker] 🔧 Processing chunk ${chunkId} (${payload.length} items)`);
+  console.log(`[Worker]  Processing chunk ${chunkId} (${payload.length} items)`);
 
   const results = payload.map((equation, idx) => {
     try {

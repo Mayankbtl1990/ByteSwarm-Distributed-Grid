@@ -1,9 +1,5 @@
 import { useEffect, useState } from 'react';
 
-/**
- * Polls the backend /api/metrics endpoint every 2 seconds to display
- * global swarm topology and job progress.
- */
 export function useSwarmMetrics() {
   const [data, setData] = useState({
     nodes: [],

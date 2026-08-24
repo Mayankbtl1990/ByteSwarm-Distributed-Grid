@@ -50,25 +50,25 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
         switch (msg.getType()) {
             case "REGISTER" -> log.info(" {} capabilities: {}", workerId, msg.getData());
             case "HEARTBEAT" -> log.debug(" Heartbeat from {}", workerId);
-           case "CHUNK_RESULT" -> {
-    Map<String, Object> data = (Map<String, Object>) msg.getData();
-    String chunkId = (String) data.get("chunkId");
-    String jobId = (String) data.get("jobId");
-    Object results = data.get("results");
-    Number computeTime = (Number) data.get("computeTimeMs");
-    long ms = computeTime != null ? computeTime.longValue() : 0;
+            case "CHUNK_RESULT" -> {
+            Map<String, Object> data = (Map<String, Object>) msg.getData();
+            String chunkId = (String) data.get("chunkId");
+            String jobId = (String) data.get("jobId");
+            Object results = data.get("results");
+            Number computeTime = (Number) data.get("computeTimeMs");
+            long ms = computeTime != null ? computeTime.longValue() : 0;
 
-    log.info(" Result from {} — chunk {} in {}ms", workerId, chunkId, ms);
-    JobManager.getInstance().recordResult(jobId, chunkId, results, ms);
-    ClientRegistry.getInstance().incrementChunks(workerId);
-    ClientRegistry.getInstance().markBusy(workerId, false);
-}
-case "BUSY_STATUS" -> {
-    Map<String, Object> data = (Map<String, Object>) msg.getData();
-    boolean busy = Boolean.TRUE.equals(data.get("busy"));
-    ClientRegistry.getInstance().markBusy(workerId, busy);
-    log.debug(" {} is now {}", workerId, busy ? "BUSY" : "IDLE");
-}
+            log.info(" Result from {} — chunk {} in {}ms", workerId, chunkId, ms);
+            JobManager.getInstance().recordResult(jobId, chunkId, results, ms);
+            ClientRegistry.getInstance().incrementChunks(workerId);
+            ClientRegistry.getInstance().markBusy(workerId, false);
+            }
+            case "BUSY_STATUS" -> {
+            Map<String, Object> data = (Map<String, Object>) msg.getData();
+            boolean busy = Boolean.TRUE.equals(data.get("busy"));
+            ClientRegistry.getInstance().markBusy(workerId, busy);
+            log.debug(" {} is now {}", workerId, busy ? "BUSY" : "IDLE");
+            }
             default -> log.warn(" Unknown type: {}", msg.getType());
         }
     }

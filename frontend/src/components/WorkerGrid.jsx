@@ -1,9 +1,6 @@
 import React from 'react';
 import { useSwarmMetrics } from '../hooks/useSwarmMetrics';
 
-/**
- * Shows every worker in the swarm as a card with load and status.
- */
 export default function WorkerGrid() {
   const { nodes } = useSwarmMetrics();
 

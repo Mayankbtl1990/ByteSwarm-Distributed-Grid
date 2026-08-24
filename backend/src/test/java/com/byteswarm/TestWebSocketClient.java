@@ -10,11 +10,7 @@ import io.netty.handler.codec.http.websocketx.*;
 
 import java.net.URI;
 
-/**
- * Simulates multiple browser tabs connecting as workers.
- * Run: mvn test-compile exec:java -Dexec.classpathScope=test
- *      -Dexec.mainClass=com.byteswarm.TestWebSocketClient
- */
+
 public class TestWebSocketClient {
 
     public static void main(String[] args) throws Exception {

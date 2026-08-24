@@ -28,25 +28,25 @@ public class ChunkingEngine {
             int end = Math.min(i + chunkSize, total);
             List<String> slice = new ArrayList<>(dataset.subList(i, end));
             String chunkId = jobId + "-chunk-" + (i / chunkSize);
-chunks.add(new Chunk(chunkId, jobId, slice));
+            chunks.add(new Chunk(chunkId, jobId, slice));
         }
 
-log.info(" Chunked {} items into {} chunks (size {})", total, chunks.size(), chunkSize);
+        log.info(" Chunked {} items into {} chunks (size {})", total, chunks.size(), chunkSize);
         return chunks;
     }
     public static List<String>generateMockDataset(int size) {
         Random rand = new Random(42);
-String[] ops = {"+", "-", "*"};
+        String[] ops = {"+", "-", "*"};
         List<String> equations = new ArrayList<>(size);
 
         for (int i = 0; i< size; i++) {
             int a = rand.nextInt(1000);
             int b = rand.nextInt(1000);
             String op = ops[rand.nextInt(ops.length)];
-equations.add(a + op + b);
+            equations.add(a + op + b);
         }
 
-log.info(" Generated {} mock equations", size);
+        log.info(" Generated {} mock equations", size);
         return equations;
     }
 }
