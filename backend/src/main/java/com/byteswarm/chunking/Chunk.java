@@ -10,6 +10,7 @@ public class Chunk {
     private List<String> payload;
     private String assignedWorkerId;
     private long timestamp;
+    private long dispatchedAt;
     private ChunkStatus status;
 
     public Chunk() {}
@@ -19,6 +20,7 @@ public class Chunk {
         this.jobId = jobId;
         this.payload = payload;
         this.timestamp = System.currentTimeMillis();
+        this.dispatchedAt = 0L;
         this.status = ChunkStatus.PENDING;
     }
 
@@ -32,6 +34,8 @@ public class Chunk {
     public void setAssignedWorkerId(String s) { this.assignedWorkerId = s; }
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long t) { this.timestamp = t; }
+    public long getDispatchedAt() { return dispatchedAt; }
+    public void setDispatchedAt(long dispatchedAt) { this.dispatchedAt = dispatchedAt; }
     public ChunkStatus getStatus() { return status; }
     public void setStatus(ChunkStatus s) { this.status = s; }
 
@@ -39,6 +43,7 @@ public class Chunk {
     public String toString() {
         return "Chunk{id=" + chunkId + ", job=" + jobId +
                 ", size=" + (payload == null ? 0 : payload.size()) +
-                ", worker=" + assignedWorkerId + ", status=" + status + "}";
+                ", worker=" + assignedWorkerId + ", status=" + status + 
+                ", dispatchedAt=" + dispatchedAt + "}";
     }
 }

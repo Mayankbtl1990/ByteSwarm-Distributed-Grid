@@ -8,16 +8,17 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 public class JobManager {
     private static final Logger log = LoggerFactory.getLogger(JobManager.class);
     private static final JobManager INSTANCE = new JobManager();
 
-    private final Map<String, JobStatus>jobStatuses = new ConcurrentHashMap<>();
-    private final Map<String, List<Chunk>>jobChunks = new ConcurrentHashMap<>();
-    private final Map<String, Map<String, Object>>jobResults = new ConcurrentHashMap<>();
-    private final Map<String, AtomicLong>chunkComputeTimes = new ConcurrentHashMap<>();
-    private final Map<String, AtomicLong>chunkComputeCounts = new ConcurrentHashMap<>();
+    private final Map<String, JobStatus> jobStatuses = new ConcurrentHashMap<>();
+    private final Map<String, List<Chunk>> jobChunks = new ConcurrentHashMap<>();
+    private final Map<String, Map<String, Object>> jobResults = new ConcurrentHashMap<>();
+    private final Map<String, AtomicLong> chunkComputeTimes = new ConcurrentHashMap<>();
+    private final Map<String, AtomicLong> chunkComputeCounts = new ConcurrentHashMap<>();
 
     private JobManager() {}
 
@@ -51,7 +52,7 @@ public class JobManager {
         }
         results.put(chunkId, result);
 
-        if (computeTimeMs> 0) {
+        if (computeTimeMs > 0) {
             chunkComputeTimes.get(jobId).addAndGet(computeTimeMs);
             chunkComputeCounts.get(jobId).incrementAndGet();
         }
@@ -64,7 +65,7 @@ public class JobManager {
                 status.setCompletedAt(System.currentTimeMillis());
                 long totalMs = chunkComputeTimes.get(jobId).get();
                 long count = chunkComputeCounts.get(jobId).get();
-                double avg = count >0 ? (double) totalMs / count : 0;
+                double avg = count > 0 ? (double) totalMs / count : 0;
                 log.info(" Job {} COMPLETED — {} chunks | avg compute: {}ms",
                 jobId, results.size(), String.format("%.2f", avg));
             }
@@ -78,8 +79,16 @@ public class JobManager {
             return (double) total.get() / count.get();
     }
 
+    // Naya added method for ChunkTimeoutDetector
+    public List<Chunk> getInFlightChunks() {
+        return jobChunks.values().stream()
+                .flatMap(List::stream)
+                .filter(c -> c.getStatus() == ChunkStatus.DISPATCHED)
+                .collect(Collectors.toList());
+    }
+
     public JobStatus getStatus(String jobId) { return jobStatuses.get(jobId); }
-    public List<Chunk>getChunks(String jobId) { return jobChunks.get(jobId); }
-    public Map<String, Object>getResults(String jobId) { return jobResults.get(jobId); }
-    public Collection<JobStatus>getAllJobs() { return jobStatuses.values(); }
+    public List<Chunk> getChunks(String jobId) { return jobChunks.get(jobId); }
+    public Map<String, Object> getResults(String jobId) { return jobResults.get(jobId); }
+    public Collection<JobStatus> getAllJobs() { return jobStatuses.values(); }
 }
