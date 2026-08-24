@@ -6,9 +6,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
- * Centralized JSON serialization utility using Jackson.
- */
+
 public final class JsonUtil {
     private static final Logger log = LoggerFactory.getLogger(JsonUtil.class);
     private static final ObjectMapper MAPPER = new ObjectMapper()

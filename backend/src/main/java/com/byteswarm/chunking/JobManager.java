@@ -26,56 +26,56 @@ public class JobManager {
     public String submitJob(List<String> dataset, int chunkSize) {
         String jobId = "job-" + UUID.randomUUID().toString().substring(0, 8);
         List<Chunk> chunks = ChunkingEngine.chunkDataset(dataset, chunkSize, jobId);
-jobChunks.put(jobId, chunks);
-jobResults.put(jobId, new ConcurrentHashMap<>());
-chunkComputeTimes.put(jobId, new AtomicLong(0));
-chunkComputeCounts.put(jobId, new AtomicLong(0));
+        jobChunks.put(jobId, chunks);
+        jobResults.put(jobId, new ConcurrentHashMap<>());
+        chunkComputeTimes.put(jobId, new AtomicLong(0));
+        chunkComputeCounts.put(jobId, new AtomicLong(0));
 
-JobStatus status = new JobStatus(jobId, chunks.size());
-jobStatuses.put(jobId, status);
+        JobStatus status = new JobStatus(jobId, chunks.size());
+        jobStatuses.put(jobId, status);
 
-log.info(" Submitted job {} with {} chunks", jobId, chunks.size());
-ChunkDispatcher.dispatch(chunks);
+        log.info(" Submitted job {} with {} chunks", jobId, chunks.size());
+        ChunkDispatcher.dispatch(chunks);
         return jobId;
     }
 
     public void recordResult(String jobId, String chunkId, Object result) {
-recordResult(jobId, chunkId, result, 0);
+        recordResult(jobId, chunkId, result, 0);
     }
 
     public void recordResult(String jobId, String chunkId, Object result, long computeTimeMs) {
         Map<String, Object> results = jobResults.get(jobId);
         if (results == null) {
-log.warn("Unknown job: {}", jobId);
+            log.warn("Unknown job: {}", jobId);
             return;
         }
-results.put(chunkId, result);
+        results.put(chunkId, result);
 
         if (computeTimeMs> 0) {
-chunkComputeTimes.get(jobId).addAndGet(computeTimeMs);
-chunkComputeCounts.get(jobId).incrementAndGet();
+            chunkComputeTimes.get(jobId).addAndGet(computeTimeMs);
+            chunkComputeCounts.get(jobId).incrementAndGet();
         }
 
-JobStatus status = jobStatuses.get(jobId);
+        JobStatus status = jobStatuses.get(jobId);
         if (status != null) {
-status.setCompletedChunks(results.size());
+            status.setCompletedChunks(results.size());
             if (results.size() >= status.getTotalChunks()) {
-status.setState("COMPLETED");
-status.setCompletedAt(System.currentTimeMillis());
+                status.setState("COMPLETED");
+                status.setCompletedAt(System.currentTimeMillis());
                 long totalMs = chunkComputeTimes.get(jobId).get();
                 long count = chunkComputeCounts.get(jobId).get();
                 double avg = count >0 ? (double) totalMs / count : 0;
-log.info(" Job {} COMPLETED — {} chunks | avg compute: {}ms",
-jobId, results.size(), String.format("%.2f", avg));
+                log.info(" Job {} COMPLETED — {} chunks | avg compute: {}ms",
+                jobId, results.size(), String.format("%.2f", avg));
             }
         }
     }
 
     public double getAverageComputeTime(String jobId) {
-AtomicLong total = chunkComputeTimes.get(jobId);
-AtomicLong count = chunkComputeCounts.get(jobId);
+        AtomicLong total = chunkComputeTimes.get(jobId);
+        AtomicLong count = chunkComputeCounts.get(jobId);
         if (total == null || count == null || count.get() == 0) return 0;
-        return (double) total.get() / count.get();
+            return (double) total.get() / count.get();
     }
 
     public JobStatus getStatus(String jobId) { return jobStatuses.get(jobId); }

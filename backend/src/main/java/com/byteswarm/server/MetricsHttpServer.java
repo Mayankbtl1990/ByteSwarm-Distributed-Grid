@@ -22,13 +22,13 @@ public class MetricsHttpServer {
             exchange.getResponseHeaders().add("Content-Type", "application/json");
 
             List<Map<String, Object>> nodes = new ArrayList<>();
-ClientRegistry.getInstance().getAllWorkerInfo().forEach((id, info) ->
-        nodes.add(Map.of(
+            ClientRegistry.getInstance().getAllWorkerInfo().forEach((id, info) ->
+            nodes.add(Map.of(
                 "id", id,
                 "busy", info.isBusy(),
                 "chunksProcessed", info.getChunksProcessed(),
                 "connectedAt", info.getConnectedAt()
-        )));
+            )));
             Map<String, Object> payload = Map.of(
                     "nodes", nodes,
                     "metrics", Map.of(
