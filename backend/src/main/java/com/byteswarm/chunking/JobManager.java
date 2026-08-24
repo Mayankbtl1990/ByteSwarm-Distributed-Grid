@@ -72,19 +72,18 @@ public class JobManager {
         }
     }
 
-    public double getAverageComputeTime(String jobId) {
-        AtomicLong total = chunkComputeTimes.get(jobId);
-        AtomicLong count = chunkComputeCounts.get(jobId);
-        if (total == null || count == null || count.get() == 0) return 0;
-            return (double) total.get() / count.get();
-    }
-
-    // Naya added method for ChunkTimeoutDetector
     public List<Chunk> getInFlightChunks() {
         return jobChunks.values().stream()
                 .flatMap(List::stream)
                 .filter(c -> c.getStatus() == ChunkStatus.DISPATCHED)
                 .collect(Collectors.toList());
+    }
+
+    public double getAverageComputeTime(String jobId) {
+        AtomicLong total = chunkComputeTimes.get(jobId);
+        AtomicLong count = chunkComputeCounts.get(jobId);
+        if (total == null || count == null || count.get() == 0) return 0;
+            return (double) total.get() / count.get();
     }
 
     public JobStatus getStatus(String jobId) { return jobStatuses.get(jobId); }
