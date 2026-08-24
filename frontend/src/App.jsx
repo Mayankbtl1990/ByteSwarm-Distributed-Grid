@@ -50,8 +50,8 @@ export default function App() {
           <h2 style={{ color: '#0f0', marginBottom: 15 }}>Your Worker Node</h2>
           <WorkerNode onChunkProcessed={handleChunkProcessed} />
           <JobsSection activeJob={activeJob} chunkStats={chunkStats} />
-          <MessageLog messages={messages} />
           <TopologyCanvas workers={workers} />
+          <MessageLog messages={messages} />
         </section>
       </main>
 
