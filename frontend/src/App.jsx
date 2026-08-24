@@ -9,6 +9,7 @@ import WorkerGrid from './components/WorkerGrid';
 import FpsMeter from './components/FpsMeter';
 import { useSwarmSocket } from './hooks/useSwarmSocket';
 import './App.css';
+import TopologyCanvas from './components/TopologyCanvas';
 
 export default function App() {
   const [activeJob, setActiveJob] = useState(null);
@@ -49,6 +50,7 @@ export default function App() {
           <h2 style={{ color: '#0f0', marginBottom: 15 }}>Your Worker Node</h2>
           <WorkerNode onChunkProcessed={handleChunkProcessed} />
           <JobsSection activeJob={activeJob} chunkStats={chunkStats} />
+          <TopologyCanvas workers={workers} />
           <MessageLog messages={messages} />
         </section>
       </main>
