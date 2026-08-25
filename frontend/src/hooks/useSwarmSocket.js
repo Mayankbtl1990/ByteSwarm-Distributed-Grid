@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { WS_URL, MESSAGE_TYPES } from '../utils/constants';
+import { WS_URL, MSG_TYPES } from '../utils/constants';
 
 const MAX_RETRIES = 10;
 const BASE_DELAY = 1000;
@@ -27,7 +27,7 @@ export function useSwarmSocket() {
 
       const workerId = `worker-${Math.random().toString(36).slice(2, 8)}`;
       ws.send(JSON.stringify({
-        type: MESSAGE_TYPES.REGISTERED,
+        type: MSG_TYPES.REGISTER,
         data: { workerId, ua: navigator.userAgent },
         timestamp: Date.now(),
       }));
