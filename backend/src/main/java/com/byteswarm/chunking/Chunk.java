@@ -1,6 +1,7 @@
 package com.byteswarm.chunking;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.List;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -24,26 +25,67 @@ public class Chunk {
         this.status = ChunkStatus.PENDING;
     }
 
-    public String getChunkId() { return chunkId; }
-    public void setChunkId(String s) { this.chunkId = s; }
-    public String getJobId() { return jobId; }
-    public void setJobId(String s) { this.jobId = s; }
-    public List<String> getPayload() { return payload; }
-    public void setPayload(List<String> p) { this.payload = p; }
-    public String getAssignedWorkerId() { return assignedWorkerId; }
-    public void setAssignedWorkerId(String s) { this.assignedWorkerId = s; }
-    public long getTimestamp() { return timestamp; }
-    public void setTimestamp(long t) { this.timestamp = t; }
-    public long getDispatchedAt() { return dispatchedAt; }
-    public void setDispatchedAt(long dispatchedAt) { this.dispatchedAt = dispatchedAt; }
-    public ChunkStatus getStatus() { return status; }
-    public void setStatus(ChunkStatus s) { this.status = s; }
+    public String getChunkId() {
+        return chunkId;
+    }
+
+    public void setChunkId(String s) {
+        this.chunkId = s;
+    }
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String s) {
+        this.jobId = s;
+    }
+
+    public List<String> getPayload() {
+        return payload;
+    }
+
+    public void setPayload(List<String> p) {
+        this.payload = p;
+    }
+
+    public String getAssignedWorkerId() {
+        return assignedWorkerId;
+    }
+
+    public void setAssignedWorkerId(String s) {
+        this.assignedWorkerId = s;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    public void setTimestamp(long t) {
+        this.timestamp = t;
+    }
+
+    public long getDispatchedAt() {
+        return dispatchedAt;
+    }
+
+    public void setDispatchedAt(long dispatchedAt) {
+        this.dispatchedAt = dispatchedAt;
+    }
+
+    public ChunkStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ChunkStatus s) {
+        this.status = s;
+    }
 
     @Override
     public String toString() {
         return "Chunk{id=" + chunkId + ", job=" + jobId +
                 ", size=" + (payload == null ? 0 : payload.size()) +
-                ", worker=" + assignedWorkerId + ", status=" + status + 
+                ", worker=" + assignedWorkerId + ", status=" + status +
                 ", dispatchedAt=" + dispatchedAt + "}";
     }
 }
