@@ -31,6 +31,7 @@ public class WorkerHealthMonitor implements Runnable {
 
                 for (String workerId : staleWorkers) {
                     log.warn("Stale worker detected: {}", workerId);
+
                     JobManager.getInstance().incrementDroppedWorkers();
                     ChunkDispatcher.handleWorkerDropped(workerId);
 
