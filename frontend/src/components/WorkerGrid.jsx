@@ -47,9 +47,11 @@ export default function WorkerGrid() {
           const color = getWorkerColor(state);
 
           return (
-            <div key={n.id} className={`worker-tile ${n.busy ? 'tile-busy' : 'tile-idle'}`}>
+            <div key={n.id} className={`worker-tile ${state === 'BUSY' ? 'tile-busy' : 'tile-idle'}`}>
               <div className="tile-header">
-                <span className="tile-icon">{state === 'BUSY' ? '⚡' : state === 'STALE' ? '🔴' : '🟢'}</span>
+                <span className="tile-icon">
+                  {state === 'BUSY' ? '⚡' : state === 'STALE' ? '🔴' : '🟢'}
+                </span>
                 <span className="tile-id mono">{(n.id || '').slice(0, 8)}</span>
               </div>
 
