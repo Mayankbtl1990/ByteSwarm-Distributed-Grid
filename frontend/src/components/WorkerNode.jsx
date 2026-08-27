@@ -2,7 +2,7 @@ import React, { useCallback, useRef, useState, useEffect } from 'react';
 import { useSwarmSocket } from '../hooks/useSwarmSocket';
 import { useComputeMetrics } from '../hooks/useComputeMetrics';
 
-export default function WorkerNode({ onChunkProcessed }) {
+export default function WorkerNode({ onChunkProcessed, onChunkAssigned, onTelemetry }) {
   const workerRef = useRef(null);
   const [currentChunk, setCurrentChunk] = useState(null);
   const sendRef = useRef(null);
@@ -10,7 +10,11 @@ export default function WorkerNode({ onChunkProcessed }) {
 
   const notifyBusy = useCallback((busy) => {
     if (sendRef.current) {
-      sendRef.current({ type: 'BUSY_STATUS', data: { busy } });
+      sendRef.current({
+        type: 'BUSY_STATUS',
+        data: { busy },
+        timestamp: Date.now(),
+      });
     }
   }, []);
 
@@ -22,41 +26,70 @@ export default function WorkerNode({ onChunkProcessed }) {
 
     workerRef.current.onmessage = (e) => {
       const { chunkId, jobId, results, computeTimeMs } = e.data;
-      console.log(`[WorkerNode] Chunk ${chunkId} done in ${computeTimeMs.toFixed(1)}ms`);
 
       if (sendRef.current) {
         sendRef.current({
           type: 'CHUNK_RESULT',
-          data: { chunkId, jobId, results, computeTimeMs }
+          data: { chunkId, jobId, results, computeTimeMs },
+          timestamp: Date.now(),
         });
       }
 
-      recordChunk(computeTimeMs, results.length);
+      recordChunk(computeTimeMs, Array.isArray(results) ? results.length : 0);
       setCurrentChunk(null);
       notifyBusy(false);
-      if (onChunkProcessed) onChunkProcessed(chunkId);
+
+      if (onChunkProcessed) {
+        onChunkProcessed({
+          chunkId,
+          jobId,
+          computeTimeMs,
+          resultsCount: Array.isArray(results) ? results.length : 0
+        });
+      }
+    };
+
+    workerRef.current.onerror = (err) => {
+      console.error('[WorkerNode] Web Worker error:', err);
+      setCurrentChunk(null);
+      notifyBusy(false);
     };
 
     return () => {
-      if (workerRef.current) workerRef.current.terminate();
+      if (workerRef.current) {
+        workerRef.current.terminate();
+      }
     };
   }, [onChunkProcessed, recordChunk, notifyBusy]);
 
   const handleMessage = useCallback((msg) => {
-    if (msg.type === 'COMPUTE_CHUNK') {
+    if (msg.type === 'COMPUTE_CHUNK' && msg.data) {
       const chunk = msg.data;
-      console.log('[WorkerNode] Received chunk:', chunk.chunkId);
       setCurrentChunk(chunk);
       notifyBusy(true);
-      workerRef.current.postMessage(chunk);
-    }
-  }, [notifyBusy]);
 
-  const { status, workerId, send } = useSwarmSocket(handleMessage);
+      if (onChunkAssigned) {
+        onChunkAssigned(chunk);
+      }
+
+      if (workerRef.current) {
+        workerRef.current.postMessage(chunk);
+      }
+    }
+  }, [notifyBusy, onChunkAssigned]);
+
+  const { status, workerId, send, stats } = useSwarmSocket(handleMessage);
   sendRef.current = send;
+
+  useEffect(() => {
+    if (onTelemetry) {
+      onTelemetry({ stats, status, workerId, metrics, currentChunk });
+    }
+  }, [onTelemetry, stats, status, workerId, metrics, currentChunk]);
 
   const statusColor = {
     connected: '#0f0',
+    reconnecting: '#ff0',
     connecting: '#ff0',
     disconnected: '#f80',
     error: '#f00'
@@ -67,25 +100,49 @@ export default function WorkerNode({ onChunkProcessed }) {
   return (
     <div className="worker-card">
       <div className="worker-header">
-        <span className="worker-icon"> </span>
+        <span className="worker-icon">🧠</span>
         <span>Worker Node</span>
         {isBusy && <span className="busy-badge">BUSY</span>}
-        <span className="worker-status-dot"
-              style={{ background: statusColor, boxShadow: `0 0 10px ${statusColor}`, marginLeft: 'auto' }}></span>
+        <span
+          className="worker-status-dot"
+          style={{ background: statusColor, boxShadow: `0 0 10px ${statusColor}`, marginLeft: 'auto' }}
+        ></span>
       </div>
+
       <div className="worker-body">
         <Row label="Status" value={status.toUpperCase()} color={statusColor} />
         <Row label="Worker ID" value={workerId || '—'} />
         <Row label="CPU Cores" value={navigator.hardwareConcurrency || 'N/A'} />
         <Row label="Chunks computed" value={metrics.chunksCompleted} color="#0f0" />
-        <Row label="Avg compute time"
-             value={metrics.avgComputeMs > 0 ? `${metrics.avgComputeMs.toFixed(1)}ms` : '—'} />
-        <Row label="Est. GFLOPS"
-             value={metrics.estimatedGFlops.toFixed(3)}
-             color="#0af" />
-        <Row label="Currently processing"
-             value={currentChunk?.chunkId?.slice(-8) || 'idle'}
-             color={currentChunk ? '#fc0' : '#666'} />
+        <Row
+          label="Avg compute time"
+          value={metrics.avgComputeMs > 0 ? `${metrics.avgComputeMs.toFixed(1)}ms` : '—'}
+        />
+        <Row
+          label="Last compute time"
+          value={metrics.lastComputeMs > 0 ? `${metrics.lastComputeMs.toFixed(1)}ms` : '—'}
+          color="#fc0"
+        />
+        <Row
+          label="Est. GFLOPS"
+          value={metrics.estimatedGFlops.toFixed(3)}
+          color="#0af"
+        />
+        <Row
+          label="Currently processing"
+          value={currentChunk?.chunkId?.slice(-8) || 'idle'}
+          color={currentChunk ? '#fc0' : '#666'}
+        />
+        <Row
+          label="Messages Rx"
+          value={stats.messagesReceived}
+          color="#0af"
+        />
+        <Row
+          label="Messages Tx"
+          value={stats.messagesSent}
+          color="#0af"
+        />
       </div>
     </div>
   );
@@ -95,7 +152,9 @@ function Row({ label, value, color }) {
   return (
     <div className="worker-row">
       <span className="worker-label">{label}</span>
-      <span className="worker-value mono" style={color ? { color } : {}}>{value}</span>
+      <span className="worker-value mono" style={color ? { color } : {}}>
+        {value}
+      </span>
     </div>
   );
 }
