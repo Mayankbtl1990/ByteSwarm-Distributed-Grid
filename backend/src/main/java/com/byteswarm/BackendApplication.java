@@ -1,12 +1,12 @@
 package com.byteswarm;
 
 import com.byteswarm.chunking.ChunkingEngine;
-import com.byteswarm.chunking.ChunkTimeoutDetector;
 import com.byteswarm.chunking.JobManager;
-import com.byteswarm.server.*;
 import com.byteswarm.config.AppConfig;
 import com.byteswarm.registry.ClientRegistry;
-
+import com.byteswarm.server.MetricsHttpServer;
+import com.byteswarm.server.NettyWebSocketServer;
+import com.byteswarm.server.WorkerHealthMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,28 +18,26 @@ public class BackendApplication {
     public static void main(String[] args) throws Exception {
         System.out.println("   ByteSwarm Server Starting...    ");
 
+        AppConfig.load();
+
         int port = AppConfig.getInt("server.port", 8080);
-        ClientRegistry registry = ClientRegistry.getInstance();
-        JobManager jobManager = JobManager.getInstance();
-        
-        // Heartbeat Monitor Setup
-        HeartbeatManager heartbeat = new HeartbeatManager(registry, dropped -> {
-            log.warn("Worker {} dropped — dispatcher will re-queue its chunks", dropped.getWorkerId());
-            ChunkDispatcher.handleWorkerDropped(dropped.getWorkerId());
-        });
-        heartbeat.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(heartbeat::stop));
+        int metricsPort = AppConfig.getInt("metrics.port", 8081);
 
-        // Timeout Detector Wiring
-        ChunkTimeoutDetector timeoutDetector = new ChunkTimeoutDetector(jobManager, chunk -> {
-            log.warn("Chunk {} timeout — will re-dispatch", chunk.getChunkId());
-            // Re-dispatch logic call if needed: ChunkDispatcher.dispatchSingle(chunk);
-        });
-        timeoutDetector.start();
-        Runtime.getRuntime().addShutdownHook(new Thread(timeoutDetector::stop));
+        ClientRegistry.getInstance();
+        JobManager.getInstance();
 
-        MetricsHttpServer.start(8081);
-        new Thread(BackendApplication::runDemoJob, "job-scheduler").start();
+        MetricsHttpServer.start(metricsPort);
+
+        Thread healthMonitorThread = new Thread(
+                new WorkerHealthMonitor(5000, 15000),
+                "worker-health-monitor"
+        );
+        healthMonitorThread.setDaemon(true);
+        healthMonitorThread.start();
+
+        Thread schedulerThread = new Thread(BackendApplication::runDemoJob, "job-scheduler");
+        schedulerThread.setDaemon(true);
+        schedulerThread.start();
 
         new NettyWebSocketServer(port).start();
     }
@@ -49,14 +47,14 @@ public class BackendApplication {
             Thread.sleep(15000);
             while (true) {
                 if (ClientRegistry.getInstance().size() > 0) {
-                    log.info(" Auto-submitting demo job...");
+                    log.info("Auto-submitting demo job...");
                     List<String> dataset = ChunkingEngine.generateMockDataset(10_000);
                     JobManager.getInstance().submitJob(dataset, 1000);
                 }
                 Thread.sleep(60000);
             }
         } catch (Exception e) {
-            log.error("Scheduler stopped: {}", e.getMessage());
+            log.error("Scheduler stopped: {}", e.getMessage(), e);
         }
     }
 }

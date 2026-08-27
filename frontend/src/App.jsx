@@ -26,7 +26,7 @@ export default function App() {
     setChunkStats(s => ({ ...s, completed: s.completed + 1 }));
   }, []);
 
-  const { messages, stats, status } = useSwarmSocket(handleMessage);
+   const { messages, stats, status } = useSwarmSocket(handleMessage);
 
   return (
     <div className="app">
