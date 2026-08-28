@@ -28,9 +28,9 @@ export default function TopologyCanvas() {
       <h2 style={{ color: '#0f0', marginBottom: 15 }}>Swarm Topology</h2>
 
       <div className="topology-master">
-        <div>MASTER NODE</div>
+        <div style={{ fontWeight: 700 }}>MASTER NODE</div>
         <div className="mono" style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-          active={safeMetrics.activeWorkers ?? safeNodes.length} | reassigned={safeMetrics.reassignedChunks ?? 0}
+          active={safeMetrics.activeWorkers ?? safeNodes.length} | busy={safeMetrics.busyWorkers ?? 0} | stale={safeMetrics.staleWorkers ?? 0}
         </div>
       </div>
 
@@ -50,6 +50,7 @@ export default function TopologyCanvas() {
                   style={{
                     borderColor: color,
                     boxShadow: `0 0 12px ${color}`,
+                    background: 'rgba(0,0,0,0.35)'
                   }}
                 >
                   <div className="topology-node-id mono">{(node.id || '').slice(0, 8)}</div>
