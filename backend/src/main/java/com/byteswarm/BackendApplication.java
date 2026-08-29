@@ -23,11 +23,15 @@ public class BackendApplication {
         int port = AppConfig.getInt("server.port", 8080);
         int metricsPort = AppConfig.getInt("metrics.port", 8081);
 
+        log.info(" ByteSwarm config loaded | wsPort={} metricsPort={}", port, metricsPort);
+
         ClientRegistry.getInstance();
         JobManager.getInstance();
 
+        log.info(" Starting Metrics HTTP server...");
         MetricsHttpServer.start(metricsPort);
 
+        log.info(" Starting worker health monitor thread...");
         Thread healthMonitorThread = new Thread(
                 new WorkerHealthMonitor(5000, 15000),
                 "worker-health-monitor"
@@ -35,10 +39,12 @@ public class BackendApplication {
         healthMonitorThread.setDaemon(true);
         healthMonitorThread.start();
 
+        log.info(" Starting demo job scheduler thread...");
         Thread schedulerThread = new Thread(BackendApplication::runDemoJob, "job-scheduler");
         schedulerThread.setDaemon(true);
         schedulerThread.start();
 
+        log.info(" Starting Netty WebSocket server on port {}...", port);
         new NettyWebSocketServer(port).start();
     }
 
@@ -49,7 +55,10 @@ public class BackendApplication {
                 if (ClientRegistry.getInstance().size() > 0) {
                     log.info("Auto-submitting demo job...");
                     List<String> dataset = ChunkingEngine.generateMockDataset(10_000);
-                    JobManager.getInstance().submitJob(dataset, 1000);
+                    String jobId = JobManager.getInstance().submitJob(dataset, 1000);
+                    log.info(" Demo job submitted successfully: {}", jobId);
+                } else {
+                    log.info(" No workers available. Skipping demo job submission cycle.");
                 }
                 Thread.sleep(60000);
             }
