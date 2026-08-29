@@ -31,9 +31,14 @@ public class ClientRegistry {
     }
 
     public void unregister(String workerId) {
-        workers.remove(workerId);
-        workerInfo.remove(workerId);
-        log.info(" Removed {} | Total: {}", workerId, workers.size());
+        Channel removedChannel = workers.remove(workerId);
+        WorkerInfo removedInfo = workerInfo.remove(workerId);
+
+        if (removedChannel != null || removedInfo != null) {
+            log.info(" Removed {} | Total: {}", workerId, workers.size());
+        } else {
+            log.debug(" Worker {} already removed", workerId);
+        }
     }
 
     public Channel get(String workerId) {
@@ -48,6 +53,8 @@ public class ClientRegistry {
         WorkerInfo info = workerInfo.get(workerId);
         if (info != null) {
             info.setBusy(busy);
+        } else {
+            log.debug(" Ignoring busy update for unknown worker {}", workerId);
         }
     }
 
@@ -55,6 +62,8 @@ public class ClientRegistry {
         WorkerInfo info = workerInfo.get(workerId);
         if (info != null) {
             info.increment();
+        } else {
+            log.debug(" Ignoring chunk increment for unknown worker {}", workerId);
         }
     }
 
@@ -62,6 +71,8 @@ public class ClientRegistry {
         WorkerInfo info = workerInfo.get(workerId);
         if (info != null) {
             info.updateHeartbeat();
+        } else {
+            log.debug(" Ignoring heartbeat from unknown worker {}", workerId);
         }
     }
 
@@ -71,6 +82,10 @@ public class ClientRegistry {
                 .filter(info -> now - info.getLastHeartbeat() > timeoutMs)
                 .map(WorkerInfo::getWorkerId)
                 .collect(Collectors.toList());
+    }
+
+    public boolean contains(String workerId) {
+        return workers.containsKey(workerId) || workerInfo.containsKey(workerId);
     }
 
     public Map<String, Channel> getAllWorkers() {
