@@ -133,15 +133,12 @@ export default function WorkerNode({ onChunkProcessed, onChunkAssigned, onTeleme
           value={currentChunk?.chunkId?.slice(-8) || 'idle'}
           color={currentChunk ? '#fc0' : '#666'}
         />
+        <Row label="Messages Rx" value={stats.messagesReceived} color="#0af" />
+        <Row label="Messages Tx" value={stats.messagesSent} color="#0af" />
         <Row
-          label="Messages Rx"
-          value={stats.messagesReceived}
-          color="#0af"
-        />
-        <Row
-          label="Messages Tx"
-          value={stats.messagesSent}
-          color="#0af"
+          label="Connection Uptime"
+          value={stats.connectedAt ? `${Math.max(0, Math.floor((Date.now() - stats.connectedAt) / 1000))}s` : '—'}
+          color="#999"
         />
       </div>
     </div>
