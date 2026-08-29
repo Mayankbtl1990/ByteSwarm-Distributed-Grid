@@ -1,6 +1,7 @@
 package com.byteswarm.server;
 
 import com.byteswarm.chunking.JobManager;
+import com.byteswarm.model.WorkerInfo;
 import com.byteswarm.registry.ClientRegistry;
 import com.byteswarm.util.JsonUtil;
 import com.sun.net.httpserver.HttpServer;
@@ -9,7 +10,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.util.*;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 public class MetricsHttpServer {
     private static final Logger log = LoggerFactory.getLogger(MetricsHttpServer.class);
@@ -21,25 +26,69 @@ public class MetricsHttpServer {
             exchange.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
             exchange.getResponseHeaders().add("Content-Type", "application/json");
 
+            long now = System.currentTimeMillis();
             List<Map<String, Object>> nodes = new ArrayList<>();
-            ClientRegistry.getInstance().getAllWorkerInfo().forEach((id, info) ->
-            nodes.add(Map.of(
-                "id", id,
-                "busy", info.isBusy(),
-                "chunksProcessed", info.getChunksProcessed(),
-                "connectedAt", info.getConnectedAt()
-            )));
-            Map<String, Object> payload = Map.of(
-                    "nodes", nodes,
-                    "metrics", Map.of(
-                            "activeWorkers", nodes.size(),
-                            "totalJobs", JobManager.getInstance().getAllJobs().size(),
-                            "timestamp", System.currentTimeMillis()
-                    ),
-                    "jobs", JobManager.getInstance().getAllJobs()
-            );
 
-            byte[] response = JsonUtil.toJson(payload).getBytes();
+            for (Map.Entry<String, WorkerInfo> entry : ClientRegistry.getInstance().getAllWorkerInfo().entrySet()) {
+                String id = entry.getKey();
+                WorkerInfo info = entry.getValue();
+                long heartbeatAgeMs = now - info.getLastHeartbeat();
+
+                String state;
+                if (heartbeatAgeMs > 15000) {
+                    state = "STALE";
+                } else if (info.isBusy()) {
+                    state = "BUSY";
+                } else {
+                    state = "IDLE";
+                }
+
+                Map<String, Object> node = new LinkedHashMap<>();
+                node.put("id", id);
+                node.put("busy", info.isBusy());
+                node.put("chunksProcessed", info.getChunksProcessed());
+                node.put("connectedAt", info.getConnectedAt());
+                node.put("lastHeartbeat", info.getLastHeartbeat());
+                node.put("heartbeatAgeMs", heartbeatAgeMs);
+                node.put("state", state);
+
+                nodes.add(node);
+            }
+
+            int totalJobs = JobManager.getInstance().getAllJobs().size();
+            long completedJobs = JobManager.getInstance().getAllJobs().stream()
+                    .filter(job -> "COMPLETED".equalsIgnoreCase(job.getState()))
+                    .count();
+            long runningJobs = JobManager.getInstance().getAllJobs().stream()
+                    .filter(job -> !"COMPLETED".equalsIgnoreCase(job.getState()))
+                    .count();
+            long busyWorkers = nodes.stream()
+                    .filter(node -> "BUSY".equals(node.get("state")))
+                    .count();
+            long staleWorkers = nodes.stream()
+                    .filter(node -> "STALE".equals(node.get("state")))
+                    .count();
+
+            Map<String, Object> metrics = new LinkedHashMap<>();
+            metrics.put("activeWorkers", nodes.size());
+            metrics.put("busyWorkers", busyWorkers);
+            metrics.put("idleWorkers", nodes.size() - busyWorkers - staleWorkers);
+            metrics.put("staleWorkers", staleWorkers);
+            metrics.put("totalJobs", totalJobs);
+            metrics.put("completedJobs", completedJobs);
+            metrics.put("runningJobs", runningJobs);
+            metrics.put("totalChunks", JobManager.getInstance().getTotalChunksCount());
+            metrics.put("completedChunks", JobManager.getInstance().getCompletedChunksCount());
+            metrics.put("reassignedChunks", JobManager.getInstance().getReassignedChunksCount());
+            metrics.put("droppedWorkers", JobManager.getInstance().getDroppedWorkersCount());
+            metrics.put("timestamp", now);
+
+            Map<String, Object> payload = new LinkedHashMap<>();
+            payload.put("nodes", nodes);
+            payload.put("metrics", metrics);
+            payload.put("jobs", JobManager.getInstance().getAllJobs());
+
+            byte[] response = JsonUtil.toJson(payload).getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, response.length);
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(response);
@@ -48,6 +97,6 @@ public class MetricsHttpServer {
 
         server.setExecutor(null);
         server.start();
-        log.info(" Metrics HTTP server started on http://localhost:{}/api/metrics", port);
+        log.info("Metrics HTTP server started on http://localhost:{}/api/metrics", port);
     }
 }

@@ -35,7 +35,9 @@ export function useSwarmSocket(onMessage) {
         ...prev,
         messagesSent: prev.messagesSent + 1,
       }));
+      return true;
     }
+    return false;
   }, []);
 
   const startHeartbeat = useCallback(() => {
@@ -129,7 +131,11 @@ export function useSwarmSocket(onMessage) {
       setReconnectAttempt(retryRef.current);
 
       console.log(`[ws] reconnecting in ${delay}ms (attempt ${retryRef.current})`);
-      setTimeout(connect, delay);
+      setTimeout(() => {
+        if (shouldReconnect.current) {
+          connect();
+        }
+      }, delay);
     };
   }, [onMessage, startHeartbeat, stopHeartbeat]);
 
@@ -140,7 +146,14 @@ export function useSwarmSocket(onMessage) {
     return () => {
       shouldReconnect.current = false;
       stopHeartbeat();
-      if (wsRef.current) wsRef.current.close();
+
+      if (wsRef.current) {
+        try {
+          wsRef.current.close();
+        } catch (e) {
+          console.warn('[ws] close cleanup error', e);
+        }
+      }
     };
   }, [connect, stopHeartbeat]);
 
