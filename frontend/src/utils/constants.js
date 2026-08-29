@@ -10,9 +10,12 @@ export const MESSAGE_TYPES = {
   ERROR: 'ERROR'
 };
 
+// Export MSG_TYPES alias to resolve hook import error
+export const MSG_TYPES = MESSAGE_TYPES;
+
 export const CONNECTION_STATUS = {
   DISCONNECTED: 'disconnected',
   CONNECTING: 'connecting',
   CONNECTED: 'connected',
   ERROR: 'error'
-}
+};
