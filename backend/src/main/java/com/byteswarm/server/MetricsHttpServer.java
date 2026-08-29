@@ -76,7 +76,7 @@ public class MetricsHttpServer {
             Map<String, Object> metrics = new LinkedHashMap<>();
             metrics.put("activeWorkers", nodes.size());
             metrics.put("busyWorkers", busyWorkers);
-            metrics.put("idleWorkers", nodes.size() - busyWorkers - staleWorkers);
+            metrics.put("idleWorkers", Math.max(0, nodes.size() - busyWorkers - staleWorkers));
             metrics.put("staleWorkers", staleWorkers);
             metrics.put("totalJobs", totalJobs);
             metrics.put("completedJobs", completedJobs);
