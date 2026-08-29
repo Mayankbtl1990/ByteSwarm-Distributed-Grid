@@ -106,6 +106,10 @@ public class ChunkDispatcher {
         Map<String, WorkerInfo> workerInfo = ClientRegistry.getInstance().getAllWorkerInfo();
 
         for (Chunk chunk : lostChunks) {
+            if (chunk.getStatus() == ChunkStatus.COMPLETED) {
+                continue;
+            }
+
             JobManager.getInstance().markChunkReassigned(chunk.getJobId(), chunk.getChunkId());
 
             String nextWorker = pickLeastLoadedWorker(workers, workerInfo);
