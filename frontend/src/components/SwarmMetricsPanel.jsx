@@ -25,6 +25,7 @@ export default function SwarmMetricsPanel() {
         <SwarmStat label="Active Workers" value={safeMetrics.activeWorkers ?? safeNodes.length} color="#0f0" />
         <SwarmStat label="Busy Workers" value={safeMetrics.busyWorkers ?? 0} color="#fc0" />
         <SwarmStat label="Idle Workers" value={safeMetrics.idleWorkers ?? 0} color="#0af" />
+        <SwarmStat label="Stale Workers" value={safeMetrics.staleWorkers ?? 0} color="#f44" />
         <SwarmStat label="Total Jobs" value={safeMetrics.totalJobs ?? safeJobs.length} color="#fc0" />
         <SwarmStat label="Running" value={runningJobs} color="#f80" />
         <SwarmStat label="Completed" value={completedJobs} color="#0af" />
