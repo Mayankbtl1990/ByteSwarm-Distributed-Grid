@@ -88,6 +88,8 @@ public class JobManager {
                     .filter(c -> c.getStatus() == ChunkStatus.COMPLETED)
                     .count());
 
+            logJobProgress(jobId);
+
             if (status.getCompletedChunks() >= status.getTotalChunks()) {
                 status.setState("COMPLETED");
                 status.setCompletedAt(System.currentTimeMillis());
@@ -99,6 +101,17 @@ public class JobManager {
                 log.info(" Job {} COMPLETED — {} chunks | avg compute: {}ms",
                         jobId, status.getCompletedChunks(), String.format("%.2f", avg));
             }
+        }
+    }
+
+    public void logJobProgress(String jobId) {
+        JobStatus status = jobStatuses.get(jobId);
+        if (status != null) {
+            log.info(" Job {} progress: {}/{} completed, state={}",
+                    jobId,
+                    status.getCompletedChunks(),
+                    status.getTotalChunks(),
+                    status.getState());
         }
     }
 
