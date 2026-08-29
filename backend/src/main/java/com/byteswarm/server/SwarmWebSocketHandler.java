@@ -19,7 +19,7 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
     public void channelActive(ChannelHandlerContext ctx) {
         String workerId = ctx.channel().id().asShortText();
         ClientRegistry.getInstance().register(workerId, ctx.channel());
-        log.info(" Worker CONNECTED: {} | Total: {}",
+        log.info(" Worker CONNECTED: {} | Total workers: {}",
                 workerId, ClientRegistry.getInstance().size());
 
         SwarmMessage welcome = new SwarmMessage(
@@ -36,6 +36,7 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
     public void channelInactive(ChannelHandlerContext ctx) {
         String workerId = ctx.channel().id().asShortText();
         try {
+            log.warn(" Worker channel inactive: {}", workerId);
             ChunkDispatcher.handleWorkerDropped(workerId);
         } catch (Exception e) {
             log.warn(" Recovery failed for dropped worker {}: {}", workerId, e.getMessage());
@@ -89,7 +90,7 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
                     return;
                 }
 
-                log.info(" Result from {} — chunk {} in {}ms", workerId, chunkId, ms);
+                log.info(" Result from {} — job {} chunk {} in {}ms", workerId, jobId, chunkId, ms);
                 JobManager.getInstance().recordResult(jobId, chunkId, results, ms);
                 ClientRegistry.getInstance().incrementChunks(workerId);
                 ClientRegistry.getInstance().markBusy(workerId, false);
@@ -108,7 +109,7 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        log.error(" Error: {}", cause.getMessage(), cause);
+        log.error(" WebSocket handler error: {}", cause.getMessage(), cause);
         ctx.close();
     }
 }
