@@ -37,7 +37,10 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
         String workerId = ctx.channel().id().asShortText();
         try {
             log.warn(" Worker channel inactive: {}", workerId);
-            ChunkDispatcher.handleWorkerDropped(workerId);
+
+            if (ClientRegistry.getInstance().contains(workerId)) {
+                ChunkDispatcher.handleWorkerDropped(workerId);
+            }
         } catch (Exception e) {
             log.warn(" Recovery failed for dropped worker {}: {}", workerId, e.getMessage());
         } finally {

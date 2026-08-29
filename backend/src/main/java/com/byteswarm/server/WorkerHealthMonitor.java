@@ -30,10 +30,19 @@ public class WorkerHealthMonitor implements Runnable {
                 List<String> staleWorkers = ClientRegistry.getInstance().findStaleWorkers(heartbeatTimeoutMs);
 
                 for (String workerId : staleWorkers) {
+                    if (!ClientRegistry.getInstance().contains(workerId)) {
+                        continue;
+                    }
+
                     log.warn("Stale worker detected: {}", workerId);
 
                     JobManager.getInstance().incrementDroppedWorkers();
-                    ChunkDispatcher.handleWorkerDropped(workerId);
+
+                    try {
+                        ChunkDispatcher.handleWorkerDropped(workerId);
+                    } catch (Exception e) {
+                        log.warn("Chunk recovery failed for stale worker {}: {}", workerId, e.getMessage());
+                    }
 
                     Channel ch = ClientRegistry.getInstance().get(workerId);
                     if (ch != null && ch.isOpen()) {
@@ -51,6 +60,8 @@ public class WorkerHealthMonitor implements Runnable {
                 log.error("WorkerHealthMonitor error: {}", e.getMessage(), e);
             }
         }
+
+        log.info("WorkerHealthMonitor stopped.");
     }
 
     public void shutdown() {

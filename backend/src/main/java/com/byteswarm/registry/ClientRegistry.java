@@ -84,6 +84,10 @@ public class ClientRegistry {
                 .collect(Collectors.toList());
     }
 
+    public boolean contains(String workerId) {
+        return workers.containsKey(workerId) || workerInfo.containsKey(workerId);
+    }
+
     public Map<String, Channel> getAllWorkers() {
         return Collections.unmodifiableMap(workers);
     }
