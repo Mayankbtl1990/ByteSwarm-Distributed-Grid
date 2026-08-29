@@ -100,7 +100,7 @@ export default function WorkerNode({ onChunkProcessed, onChunkAssigned, onTeleme
   return (
     <div className="worker-card">
       <div className="worker-header">
-        <span className="worker-icon"> </span>
+        <span className="worker-icon">🧠</span>
         <span>Worker Node</span>
         {isBusy && <span className="busy-badge">BUSY</span>}
         <span
@@ -132,6 +132,16 @@ export default function WorkerNode({ onChunkProcessed, onChunkAssigned, onTeleme
           label="Currently processing"
           value={currentChunk?.chunkId?.slice(-8) || 'idle'}
           color={currentChunk ? '#fc0' : '#666'}
+        />
+        <Row
+          label="Messages Rx"
+          value={stats.messagesReceived}
+          color="#0af"
+        />
+        <Row
+          label="Messages Tx"
+          value={stats.messagesSent}
+          color="#0af"
         />
       </div>
     </div>
