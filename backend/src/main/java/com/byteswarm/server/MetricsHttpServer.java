@@ -1,6 +1,7 @@
 package com.byteswarm.server;
 
 import com.byteswarm.chunking.JobManager;
+import com.byteswarm.model.JobStatus;
 import com.byteswarm.model.WorkerInfo;
 import com.byteswarm.registry.ClientRegistry;
 import com.byteswarm.util.JsonUtil;
@@ -55,13 +56,16 @@ public class MetricsHttpServer {
                 nodes.add(node);
             }
 
-            int totalJobs = JobManager.getInstance().getAllJobs().size();
-            long completedJobs = JobManager.getInstance().getAllJobs().stream()
+            List<JobStatus> jobs = new ArrayList<>(JobManager.getInstance().getAllJobs());
+
+            int totalJobs = jobs.size();
+            long completedJobs = jobs.stream()
                     .filter(job -> "COMPLETED".equalsIgnoreCase(job.getState()))
                     .count();
-            long runningJobs = JobManager.getInstance().getAllJobs().stream()
+            long runningJobs = jobs.stream()
                     .filter(job -> !"COMPLETED".equalsIgnoreCase(job.getState()))
                     .count();
+
             long busyWorkers = nodes.stream()
                     .filter(node -> "BUSY".equals(node.get("state")))
                     .count();
@@ -86,7 +90,7 @@ public class MetricsHttpServer {
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("nodes", nodes);
             payload.put("metrics", metrics);
-            payload.put("jobs", JobManager.getInstance().getAllJobs());
+            payload.put("jobs", jobs);
 
             byte[] response = JsonUtil.toJson(payload).getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, response.length);
