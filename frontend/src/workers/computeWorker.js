@@ -14,11 +14,11 @@ self.onmessage = (e) => {
 
   const startTime = performance.now();
 
-  console.log(`[Worker] Processing chunk ${chunkId} (${payload.length} items)`);
+  console.log([Worker] Processing chunk ${chunkId} (${payload.length} items));
 
   const results = payload.map((equation, idx) => {
     try {
-      const value = Function(`"use strict"; return (${equation});`)();
+      const value = Function("use strict"; return (${equation});)();
       return {
         input: equation,
         output: value,
@@ -34,7 +34,7 @@ self.onmessage = (e) => {
   });
 
   const elapsed = performance.now() - startTime;
-  console.log(`[Worker] Completed chunk ${chunkId} in ${elapsed.toFixed(2)}ms`);
+  console.log([Worker] Completed chunk ${chunkId} in ${elapsed.toFixed(2)}ms);
 
   self.postMessage({
     chunkId,
