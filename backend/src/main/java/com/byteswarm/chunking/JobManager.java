@@ -151,6 +151,69 @@ public class JobManager {
         }
     }
 
+    public List<Object> getOrderedResults(String jobId) {
+        List<Chunk> chunks = jobChunks.get(jobId);
+        Map<String, Object> results = jobResults.get(jobId);
+
+        if (chunks == null || results == null) {
+            return Collections.emptyList();
+        }
+
+        List<Object> ordered = new ArrayList<>();
+        for (Chunk chunk : chunks) {
+            Object chunkResult = results.get(chunk.getChunkId());
+            if (chunkResult instanceof List<?> listResult) {
+                ordered.addAll(listResult);
+            } else if (chunkResult != null) {
+                ordered.add(chunkResult);
+            }
+        }
+        return ordered;
+    }
+
+    public Map<String, Object> buildJobSummary(String jobId) {
+        JobStatus status = jobStatuses.get(jobId);
+        List<Chunk> chunks = jobChunks.get(jobId);
+        Map<String, Object> results = jobResults.get(jobId);
+        List<Object> orderedResults = getOrderedResults(jobId);
+
+        Map<String, Object> summary = new LinkedHashMap<>();
+        summary.put("jobId", jobId);
+        summary.put("state", status != null ? status.getState() : "UNKNOWN");
+        summary.put("totalChunks", status != null ? status.getTotalChunks() : 0);
+        summary.put("completedChunks", status != null ? status.getCompletedChunks() : 0);
+        summary.put("progress", status != null ? status.getProgress() : 0);
+        summary.put("averageComputeMs", getAverageComputeTime(jobId));
+        summary.put("resultChunkCount", results != null ? results.size() : 0);
+        summary.put("aggregatedResultCount", orderedResults.size());
+        summary.put("startedAt", status != null ? status.getStartedAt() : 0);
+        summary.put("completedAt", status != null ? status.getCompletedAt() : 0);
+        summary.put("chunksPresent", chunks != null ? chunks.size() : 0);
+
+        if (!orderedResults.isEmpty()) {
+            int previewSize = Math.min(5, orderedResults.size());
+            summary.put("resultPreview", orderedResults.subList(0, previewSize));
+        } else {
+            summary.put("resultPreview", Collections.emptyList());
+        }
+
+        return summary;
+    }
+
+    public Map<String, Object> buildFinalOutput(String jobId) {
+        Map<String, Object> output = new LinkedHashMap<>();
+        output.put("jobSummary", buildJobSummary(jobId));
+        output.put("orderedResults", getOrderedResults(jobId));
+        return output;
+    }
+
+    public List<Map<String, Object>> getAllJobSummaries() {
+        return jobStatuses.keySet().stream()
+                .sorted()
+                .map(this::buildJobSummary)
+                .collect(Collectors.toList());
+    }
+
     public void incrementDroppedWorkers() {
         droppedWorkers.incrementAndGet();
     }

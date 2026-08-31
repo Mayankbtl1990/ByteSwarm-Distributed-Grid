@@ -91,6 +91,7 @@ public class MetricsHttpServer {
             payload.put("nodes", nodes);
             payload.put("metrics", metrics);
             payload.put("jobs", jobs);
+            payload.put("jobSummaries", JobManager.getInstance().getAllJobSummaries());
 
             byte[] response = JsonUtil.toJson(payload).getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, response.length);
