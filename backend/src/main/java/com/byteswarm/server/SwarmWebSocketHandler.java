@@ -10,6 +10,7 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Map;
 
 public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
@@ -90,6 +91,16 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
 
                 if (chunkId == null || jobId == null) {
                     log.warn(" Invalid CHUNK_RESULT from {}: missing jobId/chunkId", workerId);
+                    return;
+                }
+
+                if (results == null) {
+                    log.warn(" Invalid CHUNK_RESULT from {}: missing results for chunk {}", workerId, chunkId);
+                    return;
+                }
+
+                if (!(results instanceof Collection<?>)) {
+                    log.warn(" Invalid CHUNK_RESULT from {}: results is not a collection for chunk {}", workerId, chunkId);
                     return;
                 }
 
