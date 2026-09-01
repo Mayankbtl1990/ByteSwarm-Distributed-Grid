@@ -1,9 +1,9 @@
 package com.byteswarm.server;
 
 import com.byteswarm.chunking.JobManager;
+import com.byteswarm.model.SwarmMessage;
 import com.byteswarm.registry.ClientRegistry;
 import com.byteswarm.util.JsonUtil;
-import com.byteswarm.model.SwarmMessage;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
@@ -55,14 +55,14 @@ public class SwarmWebSocketHandler extends SimpleChannelInboundHandler<TextWebSo
         String workerId = ctx.channel().id().asShortText();
         try {
             SwarmMessage msg = JsonUtil.fromJson(frame.text(), SwarmMessage.class);
-            handleMessage(ctx, workerId, msg);
+            handleMessage(workerId, msg);
         } catch (Exception e) {
             log.warn(" Bad message from {}: {}", workerId, e.getMessage());
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void handleMessage(ChannelHandlerContext ctx, String workerId, SwarmMessage msg) {
+    private void handleMessage(String workerId, SwarmMessage msg) {
         if (msg == null || msg.getType() == null) {
             log.warn(" Null or malformed message from {}", workerId);
             return;
