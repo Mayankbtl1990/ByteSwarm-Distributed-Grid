@@ -130,7 +130,7 @@ export function useSwarmSocket(onMessage) {
       retryRef.current += 1;
       setReconnectAttempt(retryRef.current);
 
-      console.log([ws] reconnecting in ${delay}ms (attempt ${retryRef.current}));
+      console.log(`[ws] reconnecting in ${delay}ms (attempt ${retryRef.current})`);
       setTimeout(() => {
         if (shouldReconnect.current) {
           connect();

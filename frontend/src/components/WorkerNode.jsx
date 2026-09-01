@@ -114,25 +114,10 @@ export default function WorkerNode({ onChunkProcessed, onChunkAssigned, onTeleme
         <Row label="Worker ID" value={workerId || '—'} />
         <Row label="CPU Cores" value={navigator.hardwareConcurrency || 'N/A'} />
         <Row label="Chunks computed" value={metrics.chunksCompleted} color="#0f0" />
-        <Row
-          label="Avg compute time"
-          value={metrics.avgComputeMs > 0 ? `${metrics.avgComputeMs.toFixed(1)}ms` : '—'}
-        />
-        <Row
-          label="Last compute time"
-          value={metrics.lastComputeMs > 0 ? `${metrics.lastComputeMs.toFixed(1)}ms` : '—'}
-          color="#fc0"
-        />
-        <Row
-          label="Est. GFLOPS"
-          value={metrics.estimatedGFlops.toFixed(3)}
-          color="#0af"
-        />
-        <Row
-          label="Currently processing"
-          value={currentChunk?.chunkId?.slice(-8) || 'idle'}
-          color={currentChunk ? '#fc0' : '#666'}
-        />
+        <Row label="Avg compute time" value={metrics.avgComputeMs > 0 ? `${metrics.avgComputeMs.toFixed(1)}ms` : '—'} />
+        <Row label="Last compute time" value={metrics.lastComputeMs > 0 ? `${metrics.lastComputeMs.toFixed(1)}ms` : '—'} color="#fc0" />
+        <Row label="Est. GFLOPS" value={metrics.estimatedGFlops.toFixed(3)} color="#0af" />
+        <Row label="Currently processing" value={currentChunk?.chunkId?.slice(-8) || 'idle'} color={currentChunk ? '#fc0' : '#666'} />
         <Row label="Messages Rx" value={stats.messagesReceived} color="#0af" />
         <Row label="Messages Tx" value={stats.messagesSent} color="#0af" />
         <Row
