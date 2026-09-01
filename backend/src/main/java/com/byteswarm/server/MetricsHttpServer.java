@@ -87,11 +87,18 @@ public class MetricsHttpServer {
             metrics.put("droppedWorkers", JobManager.getInstance().getDroppedWorkersCount());
             metrics.put("timestamp", now);
 
+            List<Map<String, Object>> jobSummaries = JobManager.getInstance().getAllJobSummaries();
+
+            List<Map<String, Object>> completedJobOutputs = jobSummaries.stream()
+                    .filter(summary -> "COMPLETED".equalsIgnoreCase(String.valueOf(summary.get("state"))))
+                    .toList();
+
             Map<String, Object> payload = new LinkedHashMap<>();
             payload.put("nodes", nodes);
             payload.put("metrics", metrics);
             payload.put("jobs", jobs);
-            payload.put("jobSummaries", JobManager.getInstance().getAllJobSummaries());
+            payload.put("jobSummaries", jobSummaries);
+            payload.put("completedJobSummaries", completedJobOutputs);
 
             byte[] response = JsonUtil.toJson(payload).getBytes(StandardCharsets.UTF_8);
             exchange.sendResponseHeaders(200, response.length);
