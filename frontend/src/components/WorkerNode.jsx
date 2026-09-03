@@ -100,7 +100,7 @@ export default function WorkerNode({ onChunkProcessed, onChunkAssigned, onTeleme
   return (
     <div className="worker-card">
       <div className="worker-header">
-        <span className="worker-icon"> </span>
+        <span className="worker-icon"></span>
         <span>Worker Node</span>
         {isBusy && <span className="busy-badge">BUSY</span>}
         <span
