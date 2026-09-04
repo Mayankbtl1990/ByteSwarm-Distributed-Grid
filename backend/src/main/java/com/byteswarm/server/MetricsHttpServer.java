@@ -88,7 +88,6 @@ public class MetricsHttpServer {
             metrics.put("timestamp", now);
 
             List<Map<String, Object>> jobSummaries = JobManager.getInstance().getAllJobSummaries();
-
             List<Map<String, Object>> completedJobOutputs = jobSummaries.stream()
                     .filter(summary -> "COMPLETED".equalsIgnoreCase(String.valueOf(summary.get("state"))))
                     .toList();
