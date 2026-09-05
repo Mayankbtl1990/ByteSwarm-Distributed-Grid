@@ -1,0 +1,521 @@
+# ByteSwarm Distributed Grid
+
+## Week 3 — Fault Tolerance, Worker Recovery, Monitoring & Topology
+
+**Project:** ByteSwarm Distributed Grid
+**Repository:** Mayankbtl1990/ByteSwarm-Distributed-Grid
+**Week:** Week 3
+**Period:** August 24–29, 2026
+**Primary Focus:** Fault tolerance, worker recovery, connection resilience, monitoring and swarm topology
+
+---
+
+## 1. Week 3 Objective
+
+The main objective of Week 3 was to make the distributed compute grid more reliable.
+
+During Week 2, ByteSwarm was able to:
+
+* Split jobs into chunks.
+* Dispatch chunks to workers.
+* Execute computation inside browser Web Workers.
+* Track worker load.
+* Collect computation results.
+* Display basic swarm metrics.
+
+The main weakness was that the system depended on workers remaining connected and responding correctly.
+
+Week 3 therefore focused on:
+
+1. Detecting failed or stale workers.
+2. Detecting chunks that become stuck.
+3. Reassigning work from failed workers.
+4. Recovering WebSocket connections.
+5. Monitoring worker and job health.
+6. Displaying recovery information on the dashboard.
+7. Improving topology visualization.
+8. Improving backend recovery metrics.
+
+The GitHub history confirms these changes through commits such as `add hearbeatmanager to detect dropped workers`, `feat(chunking): detect stuck chunks with ChunkTimeoutDetector`, and `implement dropped worker chunk reassignment`.
+
+---
+
+# 2. Week 3 Architecture Improvement
+
+### Before Week 3
+
+```text
+Client
+  |
+  v
+Netty WebSocket Server
+  |
+  v
+Chunk Dispatcher
+  |
+  v
+Worker
+  |
+  v
+Result
+```
+
+The main problem was:
+
+```text
+Worker fails
+     |
+     X
+Chunk remains assigned
+     |
+     X
+Job may never complete
+```
+
+### After Week 3
+
+```text
+                    +----------------------+
+                    |   Netty WebSocket    |
+                    |       Server         |
+                    +----------+-----------+
+                               |
+                +--------------+--------------+
+                |                             |
+                v                             v
+        Heartbeat Manager             Connection Recovery
+                |                             |
+                v                             v
+          Worker Registry              Reconnect Logic
+                |
+                v
+       Worker Health Status
+                |
+        +-------+--------+
+        |                |
+        v                v
+ Worker Alive       Worker Dropped
+                         |
+                         v
+                Chunk Reassignment
+                         |
+                         v
+                  Chunk Dispatcher
+                         |
+                         v
+                  Healthy Worker
+```
+
+This transformed ByteSwarm from a simple distributed execution system into a more resilient distributed processing system.
+
+---
+
+# 3. Day 1 — Worker Health & Chunk Timeout Detection
+
+## 3.1 Heartbeat Manager
+
+A `HeartbeatManager` was introduced to monitor worker health.
+
+The purpose is to periodically determine whether workers are still alive.
+
+The GitHub history contains the commit:
+
+```text
+add hearbeatmanager to detect dropped workers
+```
+
+and later:
+
+```text
+add stale worker monitor and backend health scan startup
+```
+
+These changes were committed by Bhanu and integrated into the project.
+
+### Responsibilities
+
+The heartbeat system:
+
+* Monitors connected workers.
+* Tracks worker activity.
+* Detects stale workers.
+* Identifies workers that stop responding.
+* Triggers recovery processing when a worker disappears.
+
+### Result
+
+The backend can now distinguish between:
+
+```text
+ACTIVE WORKER
+      |
+      v
+HEALTHY
+```
+
+and:
+
+```text
+STALE / DROPPED WORKER
+      |
+      v
+RECOVERY PROCESS
+```
+
+---
+
+# 4. Chunk Timeout Detection
+
+Week 3 also introduced chunk timeout detection.
+
+The relevant commit was:
+
+```text
+feat(chunking): detect stuck chunks with ChunkTimeoutDetector
+```
+
+with commit:
+
+```text
+b4687f0
+```
+
+A missing `ChunkingEngineTest` was subsequently added to support the functionality.
+
+## Purpose
+
+A chunk may become stuck when:
+
+* A worker crashes.
+* A WebSocket connection disappears.
+* A browser tab is closed.
+* A worker stops processing.
+* A result is never returned.
+
+Instead of waiting indefinitely, the backend can detect that the chunk has exceeded its expected execution period.
+
+### Conceptual Flow
+
+```text
+Chunk Assigned
+     |
+     v
+Start Timer
+     |
+     +------ Result received ------> SUCCESS
+     |
+     |
+     +------ Timeout -------------> STUCK
+                                      |
+                                      v
+                               Recovery Process
+```
+
+---
+
+# 5. Day 2 — Dropped Worker Chunk Reassignment
+
+One of the most important Week 3 features was worker failure recovery.
+
+The repository contains the commit:
+
+```text
+implement dropped worker chunk reassignment
+```
+
+with commit:
+
+```text
+803a51b
+```
+
+and related backend commits:
+
+```text
+reclaim and requeue chunks on worker drop
+```
+
+```text
+8a81367
+```
+
+These changes were merged into `main`.
+
+## Problem
+
+Suppose a job contains:
+
+```text
+Chunk 1 -> Worker A
+Chunk 2 -> Worker B
+Chunk 3 -> Worker C
+Chunk 4 -> Worker D
+```
+
+If Worker B crashes:
+
+```text
+Chunk 2 -> Worker B
+             X
+          Worker dead
+```
+
+Previously, the chunk could remain associated with the failed worker.
+
+## New Behaviour
+
+```text
+Worker B fails
+      |
+      v
+Heartbeat detects failure
+      |
+      v
+Find chunks assigned to Worker B
+      |
+      v
+Remove stale assignment
+      |
+      v
+Requeue chunks
+      |
+      v
+Chunk Dispatcher
+      |
+      v
+Select healthy worker
+      |
+      v
+Execute chunk again
+```
+
+This provides automatic recovery without requiring the user to restart the job.
+
+---
+
+# 6. Topology Visualization
+
+Week 3 also introduced the initial swarm topology visualization.
+
+The repository contains:
+
+```text
+scaffold TopologyCanvas with hub SVG
+```
+
+and later:
+
+```text
+replace broken topology view with live swarm topology panel
+```
+
+The live topology work was merged through PR #48, and the recovery dashboard work through PR #52.
+
+## Purpose
+
+The topology view provides a visual representation of:
+
+* Central ByteSwarm server.
+* Connected workers.
+* Worker states.
+* Worker health.
+* Worker recovery.
+* Swarm connectivity.
+
+Conceptually:
+
+```text
+                 Worker 1
+                    |
+                    |
+Worker 2 ------ ByteSwarm ------ Worker 3
+                    |
+                    |
+                 Worker 4
+```
+
+The visualization helps developers understand the distributed architecture during runtime.
+
+---
+
+# 7. Day 3 — Backend Monitoring
+
+A dedicated monitoring implementation was added through:
+
+```text
+backend monitoring metrics for jobs workers and recovery
+```
+
+commit:
+
+```text
+861b1be
+```
+
+This was merged through PR #57.
+
+## Monitoring Areas
+
+The backend began tracking information related to:
+
+### Job Metrics
+
+* Jobs created.
+* Jobs completed.
+* Job execution state.
+* Job processing information.
+
+### Worker Metrics
+
+* Connected workers.
+* Worker activity.
+* Worker state.
+* Worker load.
+
+### Recovery Metrics
+
+* Worker failures.
+* Chunk reassignment.
+* Recovery operations.
+* Reassignment activity.
+
+This created a stronger foundation for the final monitoring dashboard.
+
+---
+
+# 8. Connection Recovery
+
+Week 3 also improved WebSocket connection handling.
+
+The project contains the commit:
+
+```text
+feat(hook): auto-reconnect with exponential backoff
+```
+
+The connection stabilization work was merged through PR #58, whose purpose was:
+
+```text
+stabilize reconnect lifecycle and worker telemetry flow
+```
+
+The backend was also refined through PR #59:
+
+```text
+refine backend startup and websocket recovery stability
+```
+
+## Exponential Backoff
+
+Instead of reconnecting continuously:
+
+```text
+Reconnect
+Reconnect
+Reconnect
+Reconnect
+...
+```
+
+the client progressively waits:
+
+```text
+Attempt 1 -> short delay
+Attempt 2 -> longer delay
+Attempt 3 -> longer delay
+Attempt 4 -> longer delay
+```
+
+This reduces unnecessary connection pressure on the server.
+
+---
+
+# 9. Day 4 — Recovery Metrics & Runtime Display
+
+Week 3 continued with recovery metric accuracy and worker runtime visualization.
+
+PR #60 was specifically created for:
+
+```text
+refine backend job and recovery metric accuracy
+```
+
+while PR #61 focused on:
+
+```text
+polish worker runtime display and compute responsiveness
+```
+
+The objective was to make the dashboard reflect the actual state of the distributed computation system instead of showing only static or approximate values.
+
+---
+
+# 10. Day 5 — Fault Tolerance Hardening
+
+The final part of Week 3 focused on hardening the recovery mechanism.
+
+PR #62:
+
+```text
+finalize backend worker fault tolerance hardening
+```
+
+was merged into `main`.
+
+PR #63:
+
+```text
+finalize reassignment audit and backend review metrics
+```
+
+added further review and recovery metrics.
+
+The project also received runtime resilience work through PR #65.
+
+---
+
+# 11. Week 3 Team Contributions
+
+| Team Member | Major Week 3 Work                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| Bhanu       | Heartbeat monitoring, worker-drop detection, chunk recovery, fault-tolerance hardening   |
+| Mayank      | Chunk timeout detection, reassignment logic, backend monitoring, recovery metrics        |
+| Mansi       | Reconnection handling, topology visualization, recovery dashboard, dashboard styling     |
+| Balaji      | Worker runtime display, connection stabilization, runtime resilience and UI improvements |
+
+The GitHub history shows contributions across all four members through commits and merged pull requests.
+
+---
+
+# 12. Week 3 Outcome
+
+At the end of Week 3, ByteSwarm had gained:
+
+* Worker heartbeat monitoring.
+* Stale-worker detection.
+* Chunk timeout detection.
+* Automatic chunk reassignment.
+* Worker failure recovery.
+* WebSocket reconnect handling.
+* Exponential reconnect backoff.
+* Recovery metrics.
+* Worker runtime information.
+* Live topology visualization.
+* Recovery dashboard.
+* Fault-tolerance hardening.
+
+### Major improvement
+
+The system changed from:
+
+```text
+Distributed Computation
+```
+
+to:
+
+```text
+Resilient Distributed Computation
+```
+
+This was a major architectural milestone for ByteSwarm.
